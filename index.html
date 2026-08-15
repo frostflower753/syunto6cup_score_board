@@ -92,11 +92,11 @@
     .row-header { background: #f8fafc; font-weight: bold; color: #004499; text-align: right; width: 220px; font-size: 1.15rem; }
     .player-header { background: #e8f2ff; color: #004499; font-size: 1.3rem; font-weight: bold; }
 
-    /* DOUBLESチーム用カラー分岐 */
-    .team-col-0 { background: #f0f7ff !important; color: #0055bb !important; border-bottom: 2px solid #0066cc !important; }
-    .team-col-1 { background: #fff5f0 !important; color: #cc4400 !important; border-bottom: 2px solid #ff6600 !important; }
+    /* DOUBLES専用カラー（青・橙） */
+    .team-blue { background: #f0f7ff !important; color: #0055bb !important; border-bottom: 2px solid #0066cc !important; }
+    .team-orange { background: #fff5f0 !important; color: #cc4400 !important; border-bottom: 2px solid #ff6600 !important; }
 
-    /* 高コントラスト・ハッキリ見える視認性強化カラー */
+    /* 高コントラスト判定カラー */
     .p-perfect { color: #0077cc; font-weight: 900; font-size: 1.25rem; }
     .p-great { color: #d0006f; font-weight: bold; font-size: 1.2rem; }
     .p-good { color: #008800; font-weight: bold; font-size: 1.2rem; }
@@ -361,7 +361,7 @@
 
         if (!teamData[teamName]) {
           teamOrder.push(teamName);
-          teamData[teamName] = { total: 0, songs: {}, flgs: {}, members: {}, p: 0, g: 0, gd: 0, b: 0, m: 0 };
+          teamData[teamName] = { total: 0, songs: {}, flgs: {}, members: {}, songDetails: {}, p: 0, g: 0, gd: 0, b: 0, m: 0 };
         }
 
         if (r.songNum === "合計" || r.songNum === "最終結果" || r.songNum === "total") {
@@ -372,6 +372,11 @@
         if (r.songNum) {
           if (r.songName) songMap[r.songNum] = r.songName;
 
+          // チーム曲合計
+          if (!teamData[teamName].songDetails[r.songNum]) {
+            teamData[teamName].songDetails[r.songNum] = { p: 0, g: 0, gd: 0, b: 0, m: 0, score: 0, flg: r.flg };
+          }
+
           teamData[teamName].songs[r.songNum] = (teamData[teamName].songs[r.songNum] || 0) + r.score;
           teamData[teamName].flgs[r.songNum] = r.flg;
           teamData[teamName].total += r.score;
@@ -381,6 +386,14 @@
           teamData[teamName].gd += (parseInt(r.gd, 10) || 0);
           teamData[teamName].b += (parseInt(r.b, 10) || 0);
           teamData[teamName].m += (parseInt(r.m, 10) || 0);
+
+          const curS = teamData[teamName].songDetails[r.songNum];
+          curS.p += (parseInt(r.p, 10) || 0);
+          curS.g += (parseInt(r.g, 10) || 0);
+          curS.gd += (parseInt(r.gd, 10) || 0);
+          curS.b += (parseInt(r.b, 10) || 0);
+          curS.m += (parseInt(r.m, 10) || 0);
+          curS.score += r.score;
 
           if (isDoubles && pName) {
             teamData[teamName].members[pName] = teamData[teamName].members[pName] || {};
@@ -403,8 +416,12 @@
         const maxScore = Math.max(...allTotals);
         const rankMap = calculateRanks(allTotals);
 
+        // 最終結果：2チーム（2列）
         let headerRow = `<tr><th class="row-header"></th>` +
-          teamOrder.map((name, idx) => `<th class="player-header ${isDoubles ? 'team-col-' + (idx % 2) : ''}">${name}</th>`).join('') + `</tr>`;
+          teamOrder.map((name, idx) => {
+            const colorClass = isDoubles ? ((idx === 0) ? 'team-blue' : 'team-orange') : '';
+            return `<th class="player-header ${colorClass}">${name}</th>`;
+          }).join('') + `</tr>`;
 
         let songRows = songNums.map((num, idx) => {
           const sName = songMap[num] ? `<br><small style="font-weight:normal; color:#555;">（${songMap[num]}）</small>` : '';
@@ -447,7 +464,9 @@
         titleBannerHTML = `<div class="song-title-banner">${currentSongTab}曲目：${songNameStr}</div>`;
 
         let columns = [];
-        if (isDoubles) {
+
+        // DOUBLESの3曲目のみ個人戦（4列）、1,2曲目はチーム単位（2列）
+        if (isDoubles && currentSongTab === "3") {
           teamOrder.forEach((tName, teamIdx) => {
             const members = Object.keys(teamData[tName].members);
             if (members.length > 0) {
@@ -462,6 +481,15 @@
               columns.push({ header: tName, teamIdx: teamIdx, data: null });
             }
           });
+        } else if (isDoubles) {
+          teamOrder.forEach((tName, teamIdx) => {
+            const songDet = teamData[tName].songDetails[currentSongTab];
+            columns.push({
+              header: tName,
+              teamIdx: teamIdx,
+              data: songDet || null
+            });
+          });
         } else {
           const targetSongRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
           teamOrder.forEach((tName, teamIdx) => {
@@ -473,8 +501,19 @@
         const validScores = columns.map(c => c.data ? c.data.score : -1);
         const maxScore = validScores.length > 0 ? Math.max(...validScores) : -1;
 
+        // ヘッダーの色分け指定
         let headerRow = `<tr><th class="row-header"></th>` +
-          columns.map(col => `<th class="player-header team-col-${col.teamIdx % 2}">${col.header}</th>`).join('') + `</tr>`;
+          columns.map((col, idx) => {
+            let colorClass = '';
+            if (isDoubles) {
+              if (currentSongTab === "3") {
+                colorClass = (idx < 2) ? 'team-blue' : 'team-orange';
+              } else {
+                colorClass = (idx === 0) ? 'team-blue' : 'team-orange';
+              }
+            }
+            return `<th class="player-header ${colorClass}">${col.header}</th>`;
+          }).join('') + `</tr>`;
 
         const getValStr = (col, key) => col.data ? parseInt(col.data[key] || 0, 10).toLocaleString() : '-';
 
