@@ -69,7 +69,7 @@
     .selection-card .sub { font-size: 0.85rem; color: #666666; font-weight: normal; margin-top: 5px; }
 
     /* タブ切り替え */
-    .tab-container { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .tab-container { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
     .tab-btn {
       background: #ffffff; border: 1px solid #cccccc; color: #333333;
       padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;
@@ -77,7 +77,11 @@
     .tab-btn:hover { background: #e8f2ff; }
     .tab-btn.active { background: #0066cc; color: #ffffff; font-weight: bold; border-color: #0066cc; box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3); }
 
-    .anim-hint { font-size: 0.9rem; color: #0066cc; margin-bottom: 15px; font-weight: bold; }
+    /* 強調表示する曲名 */
+    .song-title-banner {
+      font-size: 1.35rem; font-weight: bold; color: #111111;
+      margin-bottom: 15px; letter-spacing: 0.5px;
+    }
 
     /* リザルトテーブル */
     .table-container {
@@ -95,16 +99,17 @@
     .team-col-0 { background: #f0f7ff !important; color: #0055bb !important; border-bottom: 2px solid #0066cc !important; }
     .team-col-1 { background: #fff5f0 !important; color: #cc4400 !important; border-bottom: 2px solid #ff6600 !important; }
 
-    /* 指定された判定用カラー（プロセカALL PERFECTイメージのパステルレインボー） */
+    /* PERFECT（水色〜パステルピンクの横グラデーション） */
     .p-perfect {
-      background: linear-gradient(135deg, #70f3ff 0%, #a8ffeb 25%, #ffffff 50%, #ffb8e7 75%, #d194ff 100%);
+      background: linear-gradient(90deg, #00d2ff 0%, #ff66c4 100%);
       color: transparent;
       -webkit-background-clip: text;
       background-clip: text;
       font-weight: 900;
-      filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.2));
+      filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.15));
     }
-    .p-great { color: #e60073; font-weight: bold; } /* ピンク */
+    /* GREAT（少し淡いピンク） */
+    .p-great { color: #ff85c0; font-weight: bold; }
     .p-good { color: #00aaff; font-weight: bold; }  /* 水色 */
     .p-bad { color: #66cc00; font-weight: bold; }   /* 黄緑 */
     .p-miss { color: #888888; font-weight: bold; }  /* 灰色 */
@@ -123,7 +128,7 @@
     .rank-3 { color: #b85c00; font-size: 1.1rem; font-weight: bold; }
 
     .score-box { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 6px; }
-    /* バッジ位置をさらに左側（left: -25px）に修正 */
+    /* バッジ位置 */
     .badge-ap, .badge-fc {
       position: absolute; top: -6px; left: -25px;
       font-size: 0.72rem; font-weight: 900;
@@ -131,13 +136,13 @@
       white-space: nowrap;
     }
     .badge-ap {
-      background: linear-gradient(135deg, #70f3ff 0%, #a8ffeb 25%, #ffffff 50%, #ffb8e7 75%, #d194ff 100%);
+      background: linear-gradient(90deg, #00d2ff 0%, #ff66c4 100%);
       color: transparent;
       -webkit-background-clip: text;
       background-clip: text;
-      filter: drop-shadow(0 0 2px rgba(112, 243, 255, 0.6));
+      filter: drop-shadow(0 0 2px rgba(0, 210, 255, 0.5));
     }
-    .badge-fc { color: #e60073; text-shadow: 0 0 2px #ffb3d9; }
+    .badge-fc { color: #ff85c0; text-shadow: 0 0 2px #ffb3d9; }
 
     /* ダブルス 2人表示用カラー */
     .p1-tag { color: #0066cc; font-weight: bold; }
@@ -296,7 +301,7 @@
         html += ` ＞ ` + (currentSongTab !== null ? `<span class="breadcrumb-item" onclick="navTo('song')">${matchLabel}</span>` : `<span class="breadcrumb-current">${matchLabel}</span>`);
       }
       if (currentSongTab !== null) {
-        html += ` ＞ <span class="breadcrumb-current">${currentSongTab === 'final' ? '🏆 最終結果' : `${currentSongTab}曲目`}</span>`;
+        html += ` ＞ <span class="breadcrumb-current">${currentSongTab === 'final' ? '最終結果' : `${currentSongTab}曲目`}</span>`;
       }
       nav.innerHTML = html;
     }
@@ -341,13 +346,13 @@
         if (matchRows.length === 0) {
           view.innerHTML = `<h1>${currentDept}部門 - ${currentRound} ${getMatchDisplayName(currentDept, currentRound, currentMatch)}</h1>
             <div style="padding: 50px 20px; background: #ffffff; border-radius: 12px; border: 1px dashed #cccccc; margin-top: 20px;">
-              <p style="font-size: 1.3rem; color: #666666; margin-bottom: 10px; font-weight: bold;">📭 データがありません</p>
+              <p style="font-size: 1.3rem; color: #666666; margin-bottom: 10px; font-weight: bold;">データがありません</p>
             </div><button class="btn-back" onclick="navTo('match')">← 試合選択に戻る</button>`;
           return;
         }
 
         let songCardsHTML = ["1", "2", "3"].map(num => `<div class="selection-card" onclick="selectSongTab('${num}')">${num}曲目<div class="sub">${num}曲目のスコア結果</div></div>`).join('');
-        songCardsHTML += `<div class="selection-card gold-card" onclick="selectSongTab('final')">🏆 最終結果<div class="sub">総合スコア・最終順位</div></div>`;
+        songCardsHTML += `<div class="selection-card gold-card" onclick="selectSongTab('final')">最終結果<div class="sub">総合スコア・最終順位</div></div>`;
 
         view.innerHTML = `<h1>表示する結果を選択してください</h1><p class="subtitle">【${currentDept}部門 / ${currentRound} ${getMatchDisplayName(currentDept, currentRound, currentMatch)}】</p>
           <div class="card-grid">${songCardsHTML}</div><button class="btn-back" onclick="navTo('match')">← 試合選択に戻る</button>`;
@@ -413,11 +418,14 @@
 
       const songNums = ["1", "2", "3"];
       let tabsHTML = songNums.map(num => `<button class="tab-btn ${currentSongTab === num ? 'active' : ''}" onclick="selectSongTab('${num}')">${num}曲目</button>`).join('') +
-        `<button class="tab-btn ${currentSongTab === 'final' ? 'active' : ''}" onclick="selectSongTab('final')">🏆 最終結果</button>`;
+        `<button class="tab-btn ${currentSongTab === 'final' ? 'active' : ''}" onclick="selectSongTab('final')">最終結果</button>`;
 
       let tableHTML = "";
+      let titleBannerHTML = "";
 
       if (currentSongTab === 'final') {
+        titleBannerHTML = `<div class="song-title-banner">最終結果</div>`;
+
         let allTotals = [];
         if (isDoubles && Object.keys(csvFinalRows).length > 0) {
           allTotals = teamOrder.map(n => csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total);
@@ -428,7 +436,8 @@
         const maxScore = Math.max(...allTotals);
         const rankMap = calculateRanks(allTotals);
 
-        let headerRow = `<tr><th class="row-header">${isDoubles ? 'チーム' : '項目 / プレイヤー'}</th>` +
+        /* 項目/プレイヤー名 は削除して空表記に */
+        let headerRow = `<tr><th class="row-header"></th>` +
           teamOrder.map((name, idx) => `<th class="player-header ${isDoubles ? 'team-col-' + (idx % 2) : ''}">${name}</th>`).join('') + `</tr>`;
 
         let songRows = songNums.map((num, idx) => {
@@ -470,10 +479,13 @@
 
       } else {
         const targetSongRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
-        const currentSongName = songMap[currentSongTab] ? `（${songMap[currentSongTab]}）` : '';
+        const songNameStr = songMap[currentSongTab] ? songMap[currentSongTab] : `${currentSongTab}曲目`;
+        titleBannerHTML = `<div class="song-title-banner">${currentSongTab}曲目：${songNameStr}</div>`;
+
         const maxScore = targetSongRows.length > 0 ? Math.max(...targetSongRows.map(r => r.score)) : -1;
 
-        let headerRow = `<tr><th class="row-header">${isDoubles ? 'チーム' : '項目 / プレイヤー'}<br><small style="font-weight:normal;">${currentSongName}</small></th>` +
+        /* 項目/プレイヤー名 は削除して空表記に */
+        let headerRow = `<tr><th class="row-header"></th>` +
           teamOrder.map((name, idx) => `<th class="player-header ${isDoubles ? 'team-col-' + (idx % 2) : ''}">${name}</th>`).join('') + `</tr>`;
 
         const getValHTML = (n, key) => {
@@ -489,12 +501,14 @@
           return rowData ? parseInt(rowData[key], 10).toLocaleString() : '-';
         };
 
-        let pRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => `<td class="p-perfect">${getValHTML(n, 'p')}</td>`).join('') + `</tr>`;
-        let gRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header p-great">GREAT</td>` + teamOrder.map(n => `<td class="p-great">${getValHTML(n, 'g')}</td>`).join('') + `</tr>`;
-        let gdRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header p-good">GOOD</td>` + teamOrder.map(n => `<td class="p-good">${getValHTML(n, 'gd')}</td>`).join('') + `</tr>`;
-        let bRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header p-bad">BAD</td>` + teamOrder.map(n => `<td class="p-bad">${getValHTML(n, 'b')}</td>`).join('') + `</tr>`;
-        let mRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header p-miss">MISS</td>` + teamOrder.map(n => `<td class="p-miss">${getValHTML(n, 'm')}</td>`).join('') + `</tr>`;
+        /* PERFECT等の文字行は anim-target を外して常時表示に修正 */
+        let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => `<td class="p-perfect">${getValHTML(n, 'p')}</td>`).join('') + `</tr>`;
+        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + teamOrder.map(n => `<td class="p-great">${getValHTML(n, 'g')}</td>`).join('') + `</tr>`;
+        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + teamOrder.map(n => `<td class="p-good">${getValHTML(n, 'gd')}</td>`).join('') + `</tr>`;
+        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + teamOrder.map(n => `<td class="p-bad">${getValHTML(n, 'b')}</td>`).join('') + `</tr>`;
+        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + teamOrder.map(n => `<td class="p-miss">${getValHTML(n, 'm')}</td>`).join('') + `</tr>`;
 
+        /* 得点セルのみ Enter キーアニメーション（step 1）を適用 */
         let scoreRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header" style="font-size:1.1rem; color:#006699;">得点</td>` + teamOrder.map(n => {
           const rowData = targetSongRows.find(r => r.name.includes(n));
           if (!rowData) return `<td class="score">-</td>`;
@@ -508,7 +522,7 @@
       view.innerHTML = `
         <h1>${currentDept}部門 - ${currentRound} ${matchLabel}</h1>
         <div class="tab-container">${tabsHTML}</div>
-        <div class="anim-hint">⌨️ <b>Enterキー</b> を押すと結果が表示されます</div>
+        ${titleBannerHTML}
         <div class="table-container" id="table-box"><table>${tableHTML}</table></div>
         <button class="btn-back" onclick="navTo('song')">← 結果選択に戻る</button>
       `;
