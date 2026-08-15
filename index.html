@@ -94,7 +94,7 @@
 
     /* 操作ガイド */
     .anim-hint {
-      font-size: 0.85rem; color: #0066cc; margin-bottom: 15px; opacity: 0.9;
+      font-size: 0.9rem; color: #0066cc; margin-bottom: 15px; font-weight: bold;
     }
 
     /* リザルトテーブル */
@@ -105,9 +105,23 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
     table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
-    th, td { padding: 14px 12px; font-size: 0.95rem; border-bottom: 1px solid #e1e4e8; }
-    th { background: #e8f2ff; color: #004499; font-size: 1.0rem; font-weight: bold; }
-    th small { font-weight: normal; color: #555555; display: block; font-size: 0.78rem; }
+    th, td { padding: 14px 16px; font-size: 0.95rem; border-bottom: 1px solid #e1e4e8; border-right: 1px solid #f0f0f0; }
+    th:last-child, td:last-child { border-right: none; }
+    
+    /* 1列目（見出し列）のスタイル */
+    .row-header {
+      background: #f8fafc;
+      font-weight: bold;
+      color: #004499;
+      text-align: right;
+      width: 140px;
+    }
+    .player-header {
+      background: #e8f2ff;
+      color: #004499;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
 
     /* スコア関連色分け */
     .p-perfect { color: #d4a000; font-weight: bold; }
@@ -115,18 +129,18 @@
     .p-good { color: #0088cc; }
     .p-bad { color: #cc00cc; }
     .p-miss { color: #cc0000; }
-    .score { font-family: monospace; font-size: 1.2rem; color: #006699; font-weight: bold; }
-    .sub-score { font-family: monospace; font-size: 1.0rem; color: #333333; }
-    .rank-1 { color: #d4a000; font-size: 1.25rem; font-weight: bold; }
-    .rank-2 { color: #777777; font-size: 1.15rem; font-weight: bold; }
-    .rank-3 { color: #b85c00; font-size: 1.05rem; font-weight: bold; }
+    .score { font-family: monospace; font-size: 1.25rem; color: #006699; font-weight: bold; }
+    .sub-score { font-family: monospace; font-size: 1.05rem; color: #333333; }
+    .rank-1 { color: #d4a000; font-size: 1.3rem; font-weight: bold; }
+    .rank-2 { color: #777777; font-size: 1.2rem; font-weight: bold; }
+    .rank-3 { color: #b85c00; font-size: 1.1rem; font-weight: bold; }
 
     /* スコアセルのレイアウト構成 */
     .score-box {
       position: relative;
       display: inline-flex;
       flex-direction: column;
-      align-items: flex-end;
+      align-items: center;
       justify-content: center;
       padding-top: 8px;
     }
@@ -135,7 +149,7 @@
     .badge-ap, .badge-fc {
       position: absolute;
       top: -4px;
-      left: -20px;
+      left: -15px;
       font-size: 0.7rem;
       font-weight: 900;
       transform: rotate(-15deg);
@@ -170,9 +184,9 @@
     }
     .btn-back:hover { background: #f0f0f0; color: #111; }
 
-    /* アニメーション定義 */
+    /* アニメーション定義（Enterキー入力待機用） */
     @keyframes dropIn {
-      0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+      0% { opacity: 0; transform: translateY(-8px) scale(0.95); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
@@ -185,6 +199,7 @@
     .anim-active .anim-m { animation: dropIn 0.4s ease forwards 1.4s; }
     .anim-active .anim-song { animation: dropIn 0.4s ease forwards 1.7s; }
     .anim-active .anim-score { animation: dropIn 0.5s ease forwards 2.0s; }
+    .anim-active .anim-rank { animation: dropIn 0.5s ease forwards 2.3s; }
   </style>
 </head>
 <body>
@@ -235,8 +250,6 @@
     function triggerAnimation() {
       const container = document.getElementById('table-box');
       if (!container) return;
-      container.classList.remove('anim-active');
-      void container.offsetWidth;
       container.classList.add('anim-active');
     }
 
@@ -280,7 +293,7 @@
       const idxScore = header.findIndex(h => h.includes('得点') || h.includes('スコア'));
       
       let idxFlg = header.findIndex(h => h.toUpperCase().includes('AP') || h.toUpperCase().includes('FC') || h.includes('FLG') || h.includes('フラグ'));
-      if (idxFlg === -1) idxFlg = 11; // L列目
+      if (idxFlg === -1) idxFlg = 11;
 
       treeData = {};
 
@@ -326,7 +339,6 @@
       return `第${matchNum}試合`;
     }
 
-    // スコア数値の左上に斜めでAP/FCを重ねるレイアウト
     function renderScoreCell(score, flg) {
       const formattedScore = score.toLocaleString();
       let badgeHTML = '';
@@ -450,7 +462,7 @@
           return `
             <div class="selection-card" onclick="selectMatch('${m}')">
               ${displayLabel}
-              <div class="sub">曲選択へ進む</div>
+              <div class="sub">結果表示へ進む</div>
             </div>
           `;
         }).join('');
@@ -522,6 +534,8 @@
 
       const isDoubles = currentDept.toUpperCase().includes("DOUBLES");
       const songMap = {};
+      
+      const teamOrder = [];
       const teamScores = {};
 
       matchRows.forEach(r => {
@@ -534,6 +548,7 @@
           }
 
           if (!teamScores[entityName]) {
+            teamOrder.push(entityName);
             teamScores[entityName] = { total: 0, songs: {}, flgs: {}, p: 0, g: 0, gd: 0, b: 0, m: 0 };
           }
           
@@ -565,96 +580,106 @@
         </button>
       `;
 
-      let tableHeader = "";
-      let tableBody = "";
+      let tableHTML = "";
 
       if (currentSongTab === 'final') {
-        tableHeader = `
-          <tr>
-            <th class="anim-item anim-base">順位</th>
-            <th class="anim-item anim-base">${isDoubles ? 'チーム名' : 'プレイヤー名'}</th>
-            <th class="p-perfect anim-item anim-p">PERFECT</th>
-            <th class="p-great anim-item anim-g">GREAT</th>
-            <th class="p-good anim-item anim-gd">GOOD</th>
-            <th class="p-bad anim-item anim-b">BAD</th>
-            <th class="p-miss anim-item anim-m">MISS</th>`;
-        
-        songNums.forEach(num => {
-          const sName = songMap[num] ? `<small>${songMap[num]}</small>` : '';
-          tableHeader += `<th class="anim-item anim-song">${num}曲目${sName}</th>`;
+        // 🏆 最終結果画面 (転置レイアウト)
+        const sortedList = [...teamOrder].sort((a, b) => teamScores[b].total - teamScores[a].total);
+        const rankMap = {};
+        sortedList.forEach((name, idx) => { rankMap[name] = idx + 1; });
+
+        // ヘッダー行: 1列目は項目名、2列目以降にプレイヤー名
+        let headerRow = `<tr><th class="row-header">${isDoubles ? 'チーム' : '項目 / プレイヤー'}</th>`;
+        teamOrder.forEach(name => {
+          headerRow += `<th class="player-header anim-item anim-base">${name}</th>`;
         });
-        tableHeader += `<th class="anim-item anim-score">合計スコア</th></tr>`;
+        headerRow += `</tr>`;
 
-        const sorted = Object.keys(teamScores)
-          .map(name => ({ name, ...teamScores[name] }))
-          .sort((a, b) => b.total - a.total);
+        // 判定行
+        let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => `<td class="p-perfect anim-item anim-p">${teamScores[n].p.toLocaleString()}</td>`).join('') + `</tr>`;
+        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + teamOrder.map(n => `<td class="p-great anim-item anim-g">${teamScores[n].g.toLocaleString()}</td>`).join('') + `</tr>`;
+        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + teamOrder.map(n => `<td class="p-good anim-item anim-gd">${teamScores[n].gd.toLocaleString()}</td>`).join('') + `</tr>`;
+        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + teamOrder.map(n => `<td class="p-bad anim-item anim-b">${teamScores[n].b.toLocaleString()}</td>`).join('') + `</tr>`;
+        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + teamOrder.map(n => `<td class="p-miss anim-item anim-m">${teamScores[n].m.toLocaleString()}</td>`).join('') + `</tr>`;
 
-        tableBody = sorted.map((p, idx) => {
-          const rank = idx + 1;
-          let row = `
-            <tr>
-              <td class="${rank <= 3 ? 'rank-' + rank : ''} anim-item anim-base">${rank}位</td>
-              <td class="anim-item anim-base"><b>${p.name}</b></td>
-              <td class="p-perfect anim-item anim-p">${p.p.toLocaleString()}</td>
-              <td class="p-great anim-item anim-g">${p.g.toLocaleString()}</td>
-              <td class="p-good anim-item anim-gd">${p.gd.toLocaleString()}</td>
-              <td class="p-bad anim-item anim-b">${p.b.toLocaleString()}</td>
-              <td class="p-miss anim-item anim-m">${p.m.toLocaleString()}</td>
-          `;
-
-          songNums.forEach(num => {
-            const sScore = p.songs[num] !== undefined ? p.songs[num] : 0;
-            const sFlg = p.flgs[num] || "";
-            const cellContent = p.songs[num] !== undefined ? renderScoreCell(sScore, sFlg) : '-';
+        // 各曲の得点行
+        let songRows = songNums.map(num => {
+          const sName = songMap[num] ? `<br><small>${songMap[num]}</small>` : '';
+          let row = `<tr><td class="row-header">${num}曲目${sName}</td>`;
+          teamOrder.forEach(n => {
+            const sScore = teamScores[n].songs[num] !== undefined ? teamScores[n].songs[num] : 0;
+            const sFlg = teamScores[n].flgs[num] || "";
+            const cellContent = teamScores[n].songs[num] !== undefined ? renderScoreCell(sScore, sFlg) : '-';
             row += `<td class="sub-score anim-item anim-song">${cellContent}</td>`;
           });
-
-          row += `<td class="score anim-item anim-score">${renderScoreCell(p.total, "")}</td></tr>`;
+          row += `</tr>`;
           return row;
         }).join('');
 
+        // 合計得点行
+        let totalRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#006699;">合計得点</td>` + teamOrder.map(n => `<td class="score anim-item anim-score">${renderScoreCell(teamScores[n].total, "")}</td>`).join('') + `</tr>`;
+
+        // 順位行
+        let rankRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#111;">順位</td>` + teamOrder.map(n => {
+          const rank = rankMap[n];
+          return `<td class="${rank <= 3 ? 'rank-' + rank : ''} anim-item anim-rank">${rank}位</td>`;
+        }).join('') + `</tr>`;
+
+        tableHTML = `
+          <thead>${headerRow}</thead>
+          <tbody>
+            ${pRow}${gRow}${gdRow}${bRow}${mRow}
+            ${songRows}
+            ${totalRow}
+            ${rankRow}
+          </tbody>
+        `;
+
       } else {
-        tableHeader = `
-          <tr>
-            <th class="anim-item anim-base">順位</th>
-            <th class="anim-item anim-base">${isDoubles ? 'チーム名 / プレイヤー名' : 'プレイヤー名'}</th>
-            <th class="p-perfect anim-item anim-p">PERFECT</th>
-            <th class="p-great anim-item anim-g">GREAT</th>
-            <th class="p-good anim-item anim-gd">GOOD</th>
-            <th class="p-bad anim-item anim-b">BAD</th>
-            <th class="p-miss anim-item anim-m">MISS</th>
-            <th class="anim-item anim-score">得点</th>
-          </tr>`;
-
+        // 🎵 個別曲目（1〜3曲目）画面 (転置レイアウト)
         const targetSongRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
-        const sorted = targetSongRows.sort((a, b) => b.score - a.score);
 
-        tableBody = sorted.map((p, idx) => {
-          const rank = idx + 1;
-          return `
-            <tr>
-              <td class="${rank <= 3 ? 'rank-' + rank : ''} anim-item anim-base">${rank}位</td>
-              <td class="anim-item anim-base"><b>${p.name}</b></td>
-              <td class="p-perfect anim-item anim-p">${parseInt(p.p, 10).toLocaleString()}</td>
-              <td class="p-great anim-item anim-g">${parseInt(p.g, 10).toLocaleString()}</td>
-              <td class="p-good anim-item anim-gd">${parseInt(p.gd, 10).toLocaleString()}</td>
-              <td class="p-bad anim-item anim-b">${parseInt(p.b, 10).toLocaleString()}</td>
-              <td class="p-miss anim-item anim-m">${parseInt(p.m, 10).toLocaleString()}</td>
-              <td class="score">${renderScoreCell(p.score, p.flg)}</td>
-            </tr>
-          `;
-        }).join('');
+        const sortedList = [...targetSongRows].sort((a, b) => b.score - a.score);
+        const rankMap = new Map();
+        sortedList.forEach((r, idx) => { rankMap.set(r, idx + 1); });
+
+        // ヘッダー行
+        let headerRow = `<tr><th class="row-header">${isDoubles ? 'チーム' : '項目 / プレイヤー'}</th>`;
+        targetSongRows.forEach(p => {
+          headerRow += `<th class="player-header anim-item anim-base">${p.name}</th>`;
+        });
+        headerRow += `</tr>`;
+
+        // 判定・スコア各行
+        let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + targetSongRows.map(p => `<td class="p-perfect anim-item anim-p">${parseInt(p.p, 10).toLocaleString()}</td>`).join('') + `</tr>`;
+        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + targetSongRows.map(p => `<td class="p-great anim-item anim-g">${parseInt(p.g, 10).toLocaleString()}</td>`).join('') + `</tr>`;
+        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + targetSongRows.map(p => `<td class="p-good anim-item anim-gd">${parseInt(p.gd, 10).toLocaleString()}</td>`).join('') + `</tr>`;
+        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + targetSongRows.map(p => `<td class="p-bad anim-item anim-b">${parseInt(p.b, 10).toLocaleString()}</td>`).join('') + `</tr>`;
+        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + targetSongRows.map(p => `<td class="p-miss anim-item anim-m">${parseInt(p.m, 10).toLocaleString()}</td>`).join('') + `</tr>`;
+
+        let scoreRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#006699;">得点</td>` + targetSongRows.map(p => `<td class="score anim-item anim-score">${renderScoreCell(p.score, p.flg)}</td>`).join('') + `</tr>`;
+
+        let rankRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#111;">順位</td>` + targetSongRows.map(p => {
+          const rank = rankMap.get(p);
+          return `<td class="${rank <= 3 ? 'rank-' + rank : ''} anim-item anim-rank">${rank}位</td>`;
+        }).join('') + `</tr>`;
+
+        tableHTML = `
+          <thead>${headerRow}</thead>
+          <tbody>
+            ${pRow}${gRow}${gdRow}${bRow}${mRow}
+            ${scoreRow}
+            ${rankRow}
+          </tbody>
+        `;
       }
 
       view.innerHTML = `
         <h1>${currentDept}部門 - ${currentRound} ${matchLabel}</h1>
         <div class="tab-container">${tabsHTML}</div>
-        <div class="anim-hint">⌨️ <b>Enterキー</b> を押すとアニメーション演出をいつでも再再生できます</div>
-        <div class="table-container anim-active" id="table-box">
-          <table>
-            <thead>${tableHeader}</thead>
-            <tbody>${tableBody}</tbody>
-          </table>
+        <div class="anim-hint">⌨️ <b>Enterキー</b> を押すとスコアが表示されます</div>
+        <div class="table-container" id="table-box">
+          <table>${tableHTML}</table>
         </div>
         <button class="btn-back" onclick="navTo('song')">← 結果選択に戻る</button>
       `;
