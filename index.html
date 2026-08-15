@@ -6,7 +6,8 @@
   <style>
     body {
       font-family: 'Helvetica Neue', Arial, sans-serif;
-      background: #0e1017; color: #ffffff;
+      background: #1e2230; /* 画面全体を少し明るいミッドナイトカラーに調整 */
+      color: #ffffff;
       margin: 0; padding: 20px;
       display: flex; flex-direction: column; align-items: center;
       min-height: 100vh;
@@ -18,7 +19,7 @@
       padding: 6px 12px; border-radius: 20px;
       font-size: 0.8rem; font-weight: bold;
       display: flex; align-items: center; gap: 6px;
-      background: rgba(0,0,0,0.6); border: 1px solid #444;
+      background: rgba(0,0,0,0.6); border: 1px solid #555;
     }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #888; }
     .status-dot.ok { background: #00ff66; box-shadow: 0 0 8px #00ff66; }
@@ -30,10 +31,10 @@
       margin-top: 30px; text-align: center;
     }
 
-    /* パンくずリスト（戻るナビゲーション） */
+    /* パンくずリスト */
     .breadcrumb {
       display: flex; justify-content: center; align-items: center; gap: 10px;
-      margin-bottom: 20px; font-size: 0.95rem; color: #a0a5ba;
+      margin-bottom: 20px; font-size: 0.95rem; color: #b0b8d0;
     }
     .breadcrumb-item { cursor: pointer; text-decoration: underline; color: #00d2ff; }
     .breadcrumb-item:hover { color: #ffffff; }
@@ -41,51 +42,60 @@
 
     /* タイトルエリア */
     h1 { color: #ffffff; margin-bottom: 10px; }
-    p.subtitle { color: #a0a5ba; margin-top: 0; margin-bottom: 30px; }
+    p.subtitle { color: #b0b8d0; margin-top: 0; margin-bottom: 25px; }
 
-    /* ボタン・カード一覧（選択画面用） */
+    /* ボタン・カード一覧 */
     .card-grid {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 20px; margin-top: 20px;
     }
     .selection-card {
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(0, 210, 255, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(0, 210, 255, 0.4);
       border-radius: 12px; padding: 25px 15px;
       font-size: 1.2rem; font-weight: bold; color: #ffffff;
       cursor: pointer; transition: all 0.2s ease;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
     }
     .selection-card:hover {
-      background: rgba(0, 210, 255, 0.2);
+      background: rgba(0, 210, 255, 0.25);
       border-color: #00d2ff;
       transform: translateY(-3px);
-      box-shadow: 0 5px 15px rgba(0, 210, 255, 0.2);
+      box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3);
     }
-    .selection-card .sub { font-size: 0.85rem; color: #a0a5ba; font-weight: normal; margin-top: 5px; }
+    .selection-card .sub { font-size: 0.85rem; color: #c0c8e0; font-weight: normal; margin-top: 5px; }
 
-    /* タブ切り替え（リザルト画面用） */
+    /* タブ切り替え */
     .tab-container {
-      display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+      display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
     }
     .tab-btn {
-      background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #ccc; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #e0e0e0; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+      transition: all 0.2s;
     }
+    .tab-btn:hover { background: rgba(0, 210, 255, 0.2); }
     .tab-btn.active {
       background: #00d2ff; color: #000; font-weight: bold; border-color: #00d2ff;
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+    }
+
+    /* 操作ガイド */
+    .anim-hint {
+      font-size: 0.85rem; color: #00d2ff; margin-bottom: 15px; opacity: 0.9;
     }
 
     /* リザルトテーブル */
     .table-container {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15);
       overflow-x: auto; margin-top: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
     table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
-    th, td { padding: 12px 10px; font-size: 0.9rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
-    th { background: rgba(0, 210, 255, 0.2); color: #00d2ff; }
-    th small { font-weight: normal; color: #d0d5e5; display: block; font-size: 0.75rem; }
+    th, td { padding: 14px 12px; font-size: 0.95rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+    th { background: rgba(0, 210, 255, 0.25); color: #00d2ff; font-size: 1.0rem; }
+    th small { font-weight: normal; color: #e0e5f5; display: block; font-size: 0.78rem; }
 
     /* スコア関連色分け */
     .p-perfect { color: #ffff00; font-weight: bold; }
@@ -93,18 +103,43 @@
     .p-good { color: #00ffff; }
     .p-bad { color: #ff00ff; }
     .p-miss { color: #ff3333; }
-    .score { font-family: monospace; font-size: 1.15rem; color: #00ffcc; font-weight: bold; }
-    .sub-score { font-family: monospace; font-size: 0.95rem; color: #e0e0e0; }
-    .rank-1 { color: #ffd700; font-size: 1.2rem; font-weight: bold; }
-    .rank-2 { color: #c0c0c0; font-size: 1.1rem; font-weight: bold; }
-    .rank-3 { color: #c4722b; font-size: 1.0rem; font-weight: bold; }
+    .score { font-family: monospace; font-size: 1.2rem; color: #00ffcc; font-weight: bold; }
+    .sub-score { font-family: monospace; font-size: 1.0rem; color: #ffffff; }
+    .rank-1 { color: #ffd700; font-size: 1.25rem; font-weight: bold; }
+    .rank-2 { color: #e0e0e0; font-size: 1.15rem; font-weight: bold; }
+    .rank-3 { color: #cd7f32; font-size: 1.05rem; font-weight: bold; }
 
     /* 戻るボタン */
     .btn-back {
-      margin-top: 25px; background: transparent; border: 1px solid #a0a5ba;
-      color: #a0a5ba; padding: 8px 20px; border-radius: 6px; cursor: pointer;
+      margin-top: 25px; background: transparent; border: 1px solid #b0b8d0;
+      color: #b0b8d0; padding: 8px 20px; border-radius: 6px; cursor: pointer;
+      transition: all 0.2s;
     }
-    .btn-back:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .btn-back:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+    /* --- 順次アニメーション定義 --- */
+    @keyframes dropIn {
+      0% {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .anim-item { opacity: 0; }
+
+    /* アニメーション用クラス（上から順番に表示） */
+    .anim-active .anim-base { animation: dropIn 0.3s ease forwards 0.0s; }
+    .anim-active .anim-p { animation: dropIn 0.4s ease forwards 0.2s; }
+    .anim-active .anim-g { animation: dropIn 0.4s ease forwards 0.5s; }
+    .anim-active .anim-gd { animation: dropIn 0.4s ease forwards 0.8s; }
+    .anim-active .anim-b { animation: dropIn 0.4s ease forwards 1.1s; }
+    .anim-active .anim-m { animation: dropIn 0.4s ease forwards 1.4s; }
+    .anim-active .anim-song { animation: dropIn 0.4s ease forwards 1.7s; }
+    .anim-active .anim-score { animation: dropIn 0.5s ease forwards 2.0s; }
   </style>
 </head>
 <body>
@@ -116,18 +151,20 @@
   </div>
 
   <div class="container">
-    <!-- ナビゲーション（パンくず） -->
     <div class="breadcrumb" id="breadcrumb"></div>
-
-    <!-- メインコンテンツ表示エリア -->
     <div id="view-area"></div>
   </div>
 
   <script>
-    // 読み込むGoogleスプレッドシートのCSV URL
+    const DEFAULT_STRUCTURE = {
+      "STANDARD": { "QF": [1], "SF": [1], "Final": [1] },
+      "NEXT": { "QF": [1, 2, 3, 4], "SF": [1, 2], "Final": [1] },
+      "ULTIMATE": { "QF": [1, 2], "SF": [1, 2], "Final": [1] },
+      "DOUBLES": { "QF": [1, 2, 3, 4], "SF": [1, 2], "Final": [1] }
+    };
+
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pub?gid=1560276695&single=true&output=csv"; 
 
-    // アプリの状態保持
     let treeData = {};
     let currentDept = null;
     let currentRound = null;
@@ -135,6 +172,22 @@
     let currentSongTab = 'final';
 
     fetchCSV();
+
+    // Enterキーを押した時にアニメーションを再再生する
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        triggerAnimation();
+      }
+    });
+
+    function triggerAnimation() {
+      const container = document.getElementById('table-box');
+      if (!container) return;
+      
+      container.classList.remove('anim-active');
+      void container.offsetWidth; // リフローを発生させてアニメーションをリセット
+      container.classList.add('anim-active');
+    }
 
     async function fetchCSV() {
       const dot = document.getElementById('status-dot');
@@ -149,20 +202,11 @@
 
         dot.className = "status-dot ok";
         text.innerText = "CSV読み込み完了";
-        render();
       } catch (err) {
         dot.className = "status-dot ng";
         text.innerText = "CSV読み込み失敗";
-        
-        document.getElementById('view-area').innerHTML = `
-          <div style="color:#ff5555; padding: 40px; border: 1px dashed #ff5555; border-radius: 12px;">
-            <h3>⚠️ CSVファイルを読み込めませんでした</h3>
-            <p style="font-size:0.9rem; text-align:left; line-height:1.6;">
-              GoogleスプレッドシートのURL指定および共有（Webに公開）設定をご確認ください。
-            </p>
-          </div>
-        `;
       }
+      render();
     }
 
     function parseCSV(text) {
@@ -225,7 +269,11 @@
       const view = document.getElementById('view-area');
 
       if (!currentDept) {
-        const depts = Object.keys(treeData);
+        const depts = Array.from(new Set([
+          ...Object.keys(DEFAULT_STRUCTURE),
+          ...Object.keys(treeData)
+        ]));
+
         let cardsHTML = depts.map(d => `
           <div class="selection-card" onclick="selectDept('${d}')">
             ${d} 部門
@@ -242,7 +290,10 @@
       }
 
       if (!currentRound) {
-        const rounds = Object.keys(treeData[currentDept]);
+        const defaultRounds = DEFAULT_STRUCTURE[currentDept] ? Object.keys(DEFAULT_STRUCTURE[currentDept]) : [];
+        const csvRounds = treeData[currentDept] ? Object.keys(treeData[currentDept]) : [];
+        const rounds = Array.from(new Set([...defaultRounds, ...csvRounds]));
+
         let cardsHTML = rounds.map(r => `
           <div class="selection-card" onclick="selectRound('${r}')">
             ${r}
@@ -260,7 +311,13 @@
       }
 
       if (!currentMatch) {
-        const matches = Object.keys(treeData[currentDept][currentRound]);
+        const defaultMatches = DEFAULT_STRUCTURE[currentDept]?.[currentRound] 
+          ? DEFAULT_STRUCTURE[currentDept][currentRound].map(String) : [];
+        const csvMatches = treeData[currentDept]?.[currentRound] 
+          ? Object.keys(treeData[currentDept][currentRound]) : [];
+        const matches = Array.from(new Set([...defaultMatches, ...csvMatches]))
+          .sort((a,b) => parseInt(a) - parseInt(b));
+
         let cardsHTML = matches.map(m => `
           <div class="selection-card" onclick="selectMatch('${m}')">
             第 ${m} 試合
@@ -285,9 +342,21 @@
     function selectMatch(m) { currentMatch = m; currentSongTab = 'final'; render(); }
 
     function renderResultView(view) {
-      const matchRows = treeData[currentDept][currentRound][currentMatch];
-      const isDoubles = currentDept.toUpperCase().includes("DOUBLES");
+      const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
       
+      if (matchRows.length === 0) {
+        view.innerHTML = `
+          <h1>${currentDept}部門 - ${currentRound} 第${currentMatch}試合</h1>
+          <div style="padding: 50px 20px; background: rgba(255, 255, 255, 0.08); border-radius: 12px; border: 1px dashed rgba(255, 255, 255, 0.2); margin-top: 20px;">
+            <p style="font-size: 1.3rem; color: #b0b8d0; margin-bottom: 10px; font-weight: bold;">📭 データがありません</p>
+            <p style="font-size: 0.95rem; color: #8a94ad; margin: 0;">この試合のリザルトデータはまだスプレッドシートに登録されていません。</p>
+          </div>
+          <button class="btn-back" onclick="navTo('match')">← 試合選択に戻る</button>
+        `;
+        return;
+      }
+
+      const isDoubles = currentDept.toUpperCase().includes("DOUBLES");
       const songMap = {};
       const teamScores = {};
 
@@ -295,7 +364,6 @@
         if (r.songNum) {
           if (r.songName) songMap[r.songNum] = r.songName;
 
-          // DOUBLESの場合は「チーム名 (プレイヤー名)」形式で入力された名称からチーム名を抽出
           let entityName = r.name;
           if (isDoubles && r.name.includes("(")) {
             entityName = r.name.split("(")[0].trim();
@@ -333,19 +401,21 @@
       let tableHeader = "";
       let tableBody = "";
 
-      // 🏆 最終結果タブ（DOUBLESもチーム単位で2つにまとめる）
       if (currentSongTab === 'final') {
         tableHeader = `
           <tr>
-            <th>順位</th><th>${isDoubles ? 'チーム名' : 'プレイヤー名'}</th>
-            <th class="p-perfect">PERFECT</th><th class="p-great">GREAT</th>
-            <th class="p-good">GOOD</th><th class="p-bad">BAD</th>
-            <th class="p-miss">MISS</th>`;
+            <th class="anim-item anim-base">順位</th>
+            <th class="anim-item anim-base">${isDoubles ? 'チーム名' : 'プレイヤー名'}</th>
+            <th class="p-perfect anim-item anim-p">PERFECT</th>
+            <th class="p-great anim-item anim-g">GREAT</th>
+            <th class="p-good anim-item anim-gd">GOOD</th>
+            <th class="p-bad anim-item anim-b">BAD</th>
+            <th class="p-miss anim-item anim-m">MISS</th>`;
         
         songNums.forEach(num => {
-          tableHeader += `<th>${num}曲目<small>${songMap[num]}</small></th>`;
+          tableHeader += `<th class="anim-item anim-song">${num}曲目<small>${songMap[num]}</small></th>`;
         });
-        tableHeader += `<th>合計スコア</th></tr>`;
+        tableHeader += `<th class="anim-item anim-score">合計スコア</th></tr>`;
 
         const sorted = Object.keys(teamScores)
           .map(name => ({ name, ...teamScores[name] }))
@@ -355,32 +425,35 @@
           const rank = idx + 1;
           let row = `
             <tr>
-              <td class="${rank <= 3 ? 'rank-' + rank : ''}">${rank}位</td>
-              <td><b>${p.name}</b></td>
-              <td class="p-perfect">${p.p.toLocaleString()}</td>
-              <td class="p-great">${p.g.toLocaleString()}</td>
-              <td class="p-good">${p.gd.toLocaleString()}</td>
-              <td class="p-bad">${p.b.toLocaleString()}</td>
-              <td class="p-miss">${p.m.toLocaleString()}</td>
+              <td class="${rank <= 3 ? 'rank-' + rank : ''} anim-item anim-base">${rank}位</td>
+              <td class="anim-item anim-base"><b>${p.name}</b></td>
+              <td class="p-perfect anim-item anim-p">${p.p.toLocaleString()}</td>
+              <td class="p-great anim-item anim-g">${p.g.toLocaleString()}</td>
+              <td class="p-good anim-item anim-gd">${p.gd.toLocaleString()}</td>
+              <td class="p-bad anim-item anim-b">${p.b.toLocaleString()}</td>
+              <td class="p-miss anim-item anim-m">${p.m.toLocaleString()}</td>
           `;
 
           songNums.forEach(num => {
             const sScore = p.songs[num] !== undefined ? p.songs[num].toLocaleString() : '-';
-            row += `<td class="sub-score">${sScore}</td>`;
+            row += `<td class="sub-score anim-item anim-song">${sScore}</td>`;
           });
 
-          row += `<td class="score">${p.total.toLocaleString()}</td></tr>`;
+          row += `<td class="score anim-item anim-score">${p.total.toLocaleString()}</td></tr>`;
           return row;
         }).join('');
 
       } else {
-        // 各曲の個別リザルト（DOUBLES 3曲目は 2人×2チーム＝4行を表示）
         tableHeader = `
           <tr>
-            <th>順位</th><th>${isDoubles ? 'チーム名 / プレイヤー名' : 'プレイヤー名'}</th>
-            <th class="p-perfect">PERFECT</th><th class="p-great">GREAT</th>
-            <th class="p-good">GOOD</th><th class="p-bad">BAD</th>
-            <th class="p-miss">MISS</th><th>得点</th>
+            <th class="anim-item anim-base">順位</th>
+            <th class="anim-item anim-base">${isDoubles ? 'チーム名 / プレイヤー名' : 'プレイヤー名'}</th>
+            <th class="p-perfect anim-item anim-p">PERFECT</th>
+            <th class="p-great anim-item anim-g">GREAT</th>
+            <th class="p-good anim-item anim-gd">GOOD</th>
+            <th class="p-bad anim-item anim-b">BAD</th>
+            <th class="p-miss anim-item anim-m">MISS</th>
+            <th class="anim-item anim-score">得点</th>
           </tr>`;
 
         const targetSongRows = matchRows.filter(r => r.songNum === currentSongTab);
@@ -390,14 +463,14 @@
           const rank = idx + 1;
           return `
             <tr>
-              <td class="${rank <= 3 ? 'rank-' + rank : ''}">${rank}位</td>
-              <td><b>${p.name}</b></td>
-              <td class="p-perfect">${parseInt(p.p, 10).toLocaleString()}</td>
-              <td class="p-great">${parseInt(p.g, 10).toLocaleString()}</td>
-              <td class="p-good">${parseInt(p.gd, 10).toLocaleString()}</td>
-              <td class="p-bad">${parseInt(p.b, 10).toLocaleString()}</td>
-              <td class="p-miss">${parseInt(p.m, 10).toLocaleString()}</td>
-              <td class="score">${p.score.toLocaleString()}</td>
+              <td class="${rank <= 3 ? 'rank-' + rank : ''} anim-item anim-base">${rank}位</td>
+              <td class="anim-item anim-base"><b>${p.name}</b></td>
+              <td class="p-perfect anim-item anim-p">${parseInt(p.p, 10).toLocaleString()}</td>
+              <td class="p-great anim-item anim-g">${parseInt(p.g, 10).toLocaleString()}</td>
+              <td class="p-good anim-item anim-gd">${parseInt(p.gd, 10).toLocaleString()}</td>
+              <td class="p-bad anim-item anim-b">${parseInt(p.b, 10).toLocaleString()}</td>
+              <td class="p-miss anim-item anim-m">${parseInt(p.m, 10).toLocaleString()}</td>
+              <td class="score anim-item anim-score">${p.score.toLocaleString()}</td>
             </tr>
           `;
         }).join('');
@@ -406,7 +479,8 @@
       view.innerHTML = `
         <h1>${currentDept}部門 - ${currentRound} 第${currentMatch}試合</h1>
         <div class="tab-container">${tabsHTML}</div>
-        <div class="table-container">
+        <div class="anim-hint">⌨️ <b>Enterキー</b> を押すとアニメーション演出をいつでも再再生できます</div>
+        <div class="table-container anim-active" id="table-box">
           <table>
             <thead>${tableHeader}</thead>
             <tbody>${tableBody}</tbody>
