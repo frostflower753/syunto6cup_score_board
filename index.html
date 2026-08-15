@@ -6,7 +6,7 @@
   <style>
     body {
       font-family: 'Helvetica Neue', Arial, sans-serif;
-      background: #1e2230; /* 画面全体を少し明るいミッドナイトカラーに調整 */
+      background: #1e2230;
       color: #ffffff;
       margin: 0; padding: 20px;
       display: flex; flex-direction: column; align-items: center;
@@ -117,21 +117,13 @@
     }
     .btn-back:hover { background: rgba(255,255,255,0.15); color: #fff; }
 
-    /* --- 順次アニメーション定義 --- */
+    /* アニメーション定義 */
     @keyframes dropIn {
-      0% {
-        opacity: 0;
-        transform: translateY(-10px) scale(0.95);
-      }
-      100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      0% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
     }
 
     .anim-item { opacity: 0; }
-
-    /* アニメーション用クラス（上から順番に表示） */
     .anim-active .anim-base { animation: dropIn 0.3s ease forwards 0.0s; }
     .anim-active .anim-p { animation: dropIn 0.4s ease forwards 0.2s; }
     .anim-active .anim-g { animation: dropIn 0.4s ease forwards 0.5s; }
@@ -144,7 +136,6 @@
 </head>
 <body>
 
-  <!-- CSVステータス表示 -->
   <div class="status-bar">
     <div class="status-dot" id="status-dot"></div>
     <span id="status-text">CSV読み込み確認中...</span>
@@ -156,11 +147,22 @@
   </div>
 
   <script>
+    // ラウンドの表記変換マップ
+    const ROUND_NAMES = {
+      "QF": "準々決勝",
+      "SF": "準決勝",
+      "Final": "決勝",
+      "準々決勝": "準々決勝",
+      "準決勝": "準決勝",
+      "決勝": "決勝"
+    };
+
+    // 規定構造
     const DEFAULT_STRUCTURE = {
-      "STANDARD": { "QF": [1], "SF": [1], "Final": [1] },
-      "NEXT": { "QF": [1, 2, 3, 4], "SF": [1, 2], "Final": [1] },
-      "ULTIMATE": { "QF": [1, 2], "SF": [1, 2], "Final": [1] },
-      "DOUBLES": { "QF": [1, 2, 3, 4], "SF": [1, 2], "Final": [1] }
+      "STANDARD": { "準々決勝": [1], "準決勝": [1], "決勝": [1] },
+      "NEXT": { "準々決勝": [1, 2, 3, 4], "準決勝": [1, 2], "決勝": [1] },
+      "ULTIMATE": { "準々決勝": [1, 2], "準決勝": [1, 2], "決勝": [1] },
+      "DOUBLES": { "準々決勝": [1, 2, 3, 4], "準決勝": [1, 2], "決勝": [1] }
     };
 
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pub?gid=1560276695&single=true&output=csv"; 
@@ -173,7 +175,6 @@
 
     fetchCSV();
 
-    // Enterキーを押した時にアニメーションを再再生する
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         triggerAnimation();
@@ -183,9 +184,8 @@
     function triggerAnimation() {
       const container = document.getElementById('table-box');
       if (!container) return;
-      
       container.classList.remove('anim-active');
-      void container.offsetWidth; // リフローを発生させてアニメーションをリセット
+      void container.offsetWidth;
       container.classList.add('anim-active');
     }
 
@@ -214,10 +214,13 @@
       treeData = {};
 
       for (let i = 1; i < rows.length; i++) {
-        const [dept, round, match, songNum, songName, name, p, g, gd, b, m, scoreStr] 
+        let [dept, rawRound, match, songNum, songName, name, p, g, gd, b, m, scoreStr] 
           = rows[i].map(c => c ? c.replace(/"/g, '').trim() : '');
 
-        if (!dept || !round || !match || !name) continue;
+        if (!dept || !rawRound || !match || !name) continue;
+
+        // QF/SF等の英名を和名（準々決勝・準決勝・決勝）に標準化
+        const round = ROUND_NAMES[rawRound] || rawRound;
         const score = parseInt(scoreStr, 10) || 0;
 
         if (!treeData[dept]) treeData[dept] = {};
@@ -226,6 +229,15 @@
 
         treeData[dept][round][match].push({ songNum, songName, name, p, g, gd, b, m, score });
       }
+    }
+
+    // ULTIMATE準々決勝専用の試合名（GroupA/GroupB）の取得ヘルパー
+    function getMatchDisplayName(dept, round, matchNum) {
+      if (dept === 'ULTIMATE' && round === '準々決勝') {
+        if (String(matchNum) === '1') return 'GroupA';
+        if (String(matchNum) === '2') return 'GroupB';
+      }
+      return `第${matchNum}試合`;
     }
 
     function renderBreadcrumb() {
@@ -251,7 +263,8 @@
       }
 
       if (currentMatch) {
-        html += ` ＞ <span class="breadcrumb-current">第${currentMatch}試合</span>`;
+        const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
+        html += ` ＞ <span class="breadcrumb-current">${matchLabel}</span>`;
       }
 
       nav.innerHTML = html;
@@ -268,6 +281,7 @@
       renderBreadcrumb();
       const view = document.getElementById('view-area');
 
+      // 1. 部門選択
       if (!currentDept) {
         const depts = Array.from(new Set([
           ...Object.keys(DEFAULT_STRUCTURE),
@@ -289,6 +303,7 @@
         return;
       }
 
+      // 2. ラウンド選択（準々決勝・準決勝・決勝）
       if (!currentRound) {
         const defaultRounds = DEFAULT_STRUCTURE[currentDept] ? Object.keys(DEFAULT_STRUCTURE[currentDept]) : [];
         const csvRounds = treeData[currentDept] ? Object.keys(treeData[currentDept]) : [];
@@ -310,6 +325,7 @@
         return;
       }
 
+      // 3. 試合選択（第1試合... または GroupA/GroupB）
       if (!currentMatch) {
         const defaultMatches = DEFAULT_STRUCTURE[currentDept]?.[currentRound] 
           ? DEFAULT_STRUCTURE[currentDept][currentRound].map(String) : [];
@@ -318,12 +334,15 @@
         const matches = Array.from(new Set([...defaultMatches, ...csvMatches]))
           .sort((a,b) => parseInt(a) - parseInt(b));
 
-        let cardsHTML = matches.map(m => `
-          <div class="selection-card" onclick="selectMatch('${m}')">
-            第 ${m} 試合
-            <div class="sub">結果を見る</div>
-          </div>
-        `).join('');
+        let cardsHTML = matches.map(m => {
+          const displayLabel = getMatchDisplayName(currentDept, currentRound, m);
+          return `
+            <div class="selection-card" onclick="selectMatch('${m}')">
+              ${displayLabel}
+              <div class="sub">結果を見る</div>
+            </div>
+          `;
+        }).join('');
 
         view.innerHTML = `
           <h1>試合を選択してください</h1>
@@ -343,10 +362,12 @@
 
     function renderResultView(view) {
       const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
+      const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
       
+      // データが存在しない（未入力）の場合
       if (matchRows.length === 0) {
         view.innerHTML = `
-          <h1>${currentDept}部門 - ${currentRound} 第${currentMatch}試合</h1>
+          <h1>${currentDept}部門 - ${currentRound} ${matchLabel}</h1>
           <div style="padding: 50px 20px; background: rgba(255, 255, 255, 0.08); border-radius: 12px; border: 1px dashed rgba(255, 255, 255, 0.2); margin-top: 20px;">
             <p style="font-size: 1.3rem; color: #b0b8d0; margin-bottom: 10px; font-weight: bold;">📭 データがありません</p>
             <p style="font-size: 0.95rem; color: #8a94ad; margin: 0;">この試合のリザルトデータはまだスプレッドシートに登録されていません。</p>
@@ -384,8 +405,12 @@
         }
       });
 
-      const songNums = Object.keys(songMap).sort((a,b) => a - b);
+      // CSVにある全曲目番号、もしくはデータ上の1, 2, 3曲目を抽出してセット
+      let csvSongNums = Object.keys(songMap);
+      if (csvSongNums.length === 0) csvSongNums = ["1", "2", "3"];
+      const songNums = Array.from(new Set([...csvSongNums])).sort((a,b) => a - b);
 
+      // タブ生成：1曲目、2曲目、3曲目... ＋ 🏆 最終結果
       let tabsHTML = songNums.map(num => `
         <button class="tab-btn ${currentSongTab === num ? 'active' : ''}" onclick="switchTab('${num}')">
           ${num}曲目
@@ -413,7 +438,8 @@
             <th class="p-miss anim-item anim-m">MISS</th>`;
         
         songNums.forEach(num => {
-          tableHeader += `<th class="anim-item anim-song">${num}曲目<small>${songMap[num]}</small></th>`;
+          const sName = songMap[num] ? `<small>${songMap[num]}</small>` : '';
+          tableHeader += `<th class="anim-item anim-song">${num}曲目${sName}</th>`;
         });
         tableHeader += `<th class="anim-item anim-score">合計スコア</th></tr>`;
 
@@ -456,7 +482,7 @@
             <th class="anim-item anim-score">得点</th>
           </tr>`;
 
-        const targetSongRows = matchRows.filter(r => r.songNum === currentSongTab);
+        const targetSongRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
         const sorted = targetSongRows.sort((a, b) => b.score - a.score);
 
         tableBody = sorted.map((p, idx) => {
@@ -470,14 +496,14 @@
               <td class="p-good anim-item anim-gd">${parseInt(p.gd, 10).toLocaleString()}</td>
               <td class="p-bad anim-item anim-b">${parseInt(p.b, 10).toLocaleString()}</td>
               <td class="p-miss anim-item anim-m">${parseInt(p.m, 10).toLocaleString()}</td>
-              <td class="score anim-item anim-score">${p.score.toLocaleString()}</td>
+              <td class="score">${p.score.toLocaleString()}</td>
             </tr>
           `;
         }).join('');
       }
 
       view.innerHTML = `
-        <h1>${currentDept}部門 - ${currentRound} 第${currentMatch}試合</h1>
+        <h1>${currentDept}部門 - ${currentRound} ${matchLabel}</h1>
         <div class="tab-container">${tabsHTML}</div>
         <div class="anim-hint">⌨️ <b>Enterキー</b> を押すとアニメーション演出をいつでも再再生できます</div>
         <div class="table-container anim-active" id="table-box">
