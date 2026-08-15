@@ -6,8 +6,8 @@
   <style>
     body {
       font-family: 'Helvetica Neue', Arial, sans-serif;
-      background: #1e2230;
-      color: #ffffff;
+      background: #f4f6f9;
+      color: #333333;
       margin: 0; padding: 20px;
       display: flex; flex-direction: column; align-items: center;
       min-height: 100vh;
@@ -19,30 +19,32 @@
       padding: 6px 12px; border-radius: 20px;
       font-size: 0.8rem; font-weight: bold;
       display: flex; align-items: center; gap: 6px;
-      background: rgba(0,0,0,0.6); border: 1px solid #555;
+      background: rgba(255, 255, 255, 0.9); border: 1px solid #ccc;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 1000;
     }
     .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #888; }
-    .status-dot.ok { background: #00ff66; box-shadow: 0 0 8px #00ff66; }
-    .status-dot.ng { background: #ff3333; box-shadow: 0 0 8px #ff3333; }
+    .status-dot.ok { background: #00cc44; box-shadow: 0 0 6px #00cc44; }
+    .status-dot.ng { background: #ff3333; box-shadow: 0 0 6px #ff3333; }
 
     /* 全体コンテナ */
     .container {
-      width: 100%; max-width: 950px;
+      width: 100%; max-width: 1000px;
       margin-top: 30px; text-align: center;
     }
 
     /* パンくずリスト */
     .breadcrumb {
-      display: flex; justify-content: center; align-items: center; gap: 10px;
-      margin-bottom: 20px; font-size: 0.95rem; color: #b0b8d0;
+      display: flex; justify-content: center; align-items: center; gap: 8px;
+      margin-bottom: 20px; font-size: 0.95rem; color: #666666; flex-wrap: wrap;
     }
-    .breadcrumb-item { cursor: pointer; text-decoration: underline; color: #00d2ff; }
-    .breadcrumb-item:hover { color: #ffffff; }
-    .breadcrumb-current { color: #ffffff; font-weight: bold; }
+    .breadcrumb-item { cursor: pointer; text-decoration: underline; color: #0066cc; }
+    .breadcrumb-item:hover { color: #003399; }
+    .breadcrumb-current { color: #111111; font-weight: bold; }
 
     /* タイトルエリア */
-    h1 { color: #ffffff; margin-bottom: 10px; }
-    p.subtitle { color: #b0b8d0; margin-top: 0; margin-bottom: 25px; }
+    h1 { color: #111111; margin-bottom: 10px; }
+    p.subtitle { color: #666666; margin-top: 0; margin-bottom: 25px; }
 
     /* ボタン・カード一覧 */
     .card-grid {
@@ -50,72 +52,123 @@
       gap: 20px; margin-top: 20px;
     }
     .selection-card {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(0, 210, 255, 0.4);
+      background: #ffffff;
+      border: 1px solid #d0d7de;
       border-radius: 12px; padding: 25px 15px;
-      font-size: 1.2rem; font-weight: bold; color: #ffffff;
+      font-size: 1.2rem; font-weight: bold; color: #111111;
       cursor: pointer; transition: all 0.2s ease;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     .selection-card:hover {
-      background: rgba(0, 210, 255, 0.25);
-      border-color: #00d2ff;
+      background: #f0f7ff;
+      border-color: #0066cc;
       transform: translateY(-3px);
-      box-shadow: 0 5px 15px rgba(0, 210, 255, 0.3);
+      box-shadow: 0 5px 15px rgba(0, 102, 204, 0.15);
     }
-    .selection-card .sub { font-size: 0.85rem; color: #c0c8e0; font-weight: normal; margin-top: 5px; }
+    .selection-card.gold-card {
+      border-color: #e6b800;
+      background: #fffdf0;
+    }
+    .selection-card.gold-card:hover {
+      background: #fff9d6;
+      border-color: #d4a000;
+      box-shadow: 0 5px 15px rgba(212, 160, 0, 0.2);
+    }
+    .selection-card .sub { font-size: 0.85rem; color: #666666; font-weight: normal; margin-top: 5px; }
 
     /* タブ切り替え */
     .tab-container {
       display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
     }
     .tab-btn {
-      background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.25);
-      color: #e0e0e0; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+      background: #ffffff; border: 1px solid #cccccc;
+      color: #333333; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
       transition: all 0.2s;
     }
-    .tab-btn:hover { background: rgba(0, 210, 255, 0.2); }
+    .tab-btn:hover { background: #e8f2ff; }
     .tab-btn.active {
-      background: #00d2ff; color: #000; font-weight: bold; border-color: #00d2ff;
-      box-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+      background: #0066cc; color: #ffffff; font-weight: bold; border-color: #0066cc;
+      box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
     }
 
     /* 操作ガイド */
     .anim-hint {
-      font-size: 0.85rem; color: #00d2ff; margin-bottom: 15px; opacity: 0.9;
+      font-size: 0.85rem; color: #0066cc; margin-bottom: 15px; opacity: 0.9;
     }
 
     /* リザルトテーブル */
     .table-container {
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15);
+      background: #ffffff;
+      border-radius: 12px; border: 1px solid #e1e4e8;
       overflow-x: auto; margin-top: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
     table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
-    th, td { padding: 14px 12px; font-size: 0.95rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-    th { background: rgba(0, 210, 255, 0.25); color: #00d2ff; font-size: 1.0rem; }
-    th small { font-weight: normal; color: #e0e5f5; display: block; font-size: 0.78rem; }
+    th, td { padding: 14px 12px; font-size: 0.95rem; border-bottom: 1px solid #e1e4e8; }
+    th { background: #e8f2ff; color: #004499; font-size: 1.0rem; font-weight: bold; }
+    th small { font-weight: normal; color: #555555; display: block; font-size: 0.78rem; }
 
     /* スコア関連色分け */
-    .p-perfect { color: #ffff00; font-weight: bold; }
-    .p-great { color: #00ff00; }
-    .p-good { color: #00ffff; }
-    .p-bad { color: #ff00ff; }
-    .p-miss { color: #ff3333; }
-    .score { font-family: monospace; font-size: 1.2rem; color: #00ffcc; font-weight: bold; }
-    .sub-score { font-family: monospace; font-size: 1.0rem; color: #ffffff; }
-    .rank-1 { color: #ffd700; font-size: 1.25rem; font-weight: bold; }
-    .rank-2 { color: #e0e0e0; font-size: 1.15rem; font-weight: bold; }
-    .rank-3 { color: #cd7f32; font-size: 1.05rem; font-weight: bold; }
+    .p-perfect { color: #d4a000; font-weight: bold; }
+    .p-great { color: #008800; font-weight: bold; }
+    .p-good { color: #0088cc; }
+    .p-bad { color: #cc00cc; }
+    .p-miss { color: #cc0000; }
+    .score { font-family: monospace; font-size: 1.2rem; color: #006699; font-weight: bold; }
+    .sub-score { font-family: monospace; font-size: 1.0rem; color: #333333; }
+    .rank-1 { color: #d4a000; font-size: 1.25rem; font-weight: bold; }
+    .rank-2 { color: #777777; font-size: 1.15rem; font-weight: bold; }
+    .rank-3 { color: #b85c00; font-size: 1.05rem; font-weight: bold; }
+
+    /* スコアセルのレイアウト構成 */
+    .score-box {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
+      padding-top: 8px;
+    }
+
+    /* AP/FC 左上に斜め配置 */
+    .badge-ap, .badge-fc {
+      position: absolute;
+      top: -4px;
+      left: -20px;
+      font-size: 0.7rem;
+      font-weight: 900;
+      transform: rotate(-15deg);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .badge-ap {
+      background: linear-gradient(90deg, #ff0000, #ff7f00, #e6b800, #00aa00, #0088cc, #8b00ff);
+      background-size: 200% auto;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: rainbow 2s linear infinite;
+    }
+
+    .badge-fc {
+      color: #e60073;
+      text-shadow: 0 0 2px #ffb3d9;
+    }
+
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
 
     /* 戻るボタン */
     .btn-back {
-      margin-top: 25px; background: transparent; border: 1px solid #b0b8d0;
-      color: #b0b8d0; padding: 8px 20px; border-radius: 6px; cursor: pointer;
+      margin-top: 25px; background: #ffffff; border: 1px solid #cccccc;
+      color: #555555; padding: 8px 20px; border-radius: 6px; cursor: pointer;
       transition: all 0.2s;
     }
-    .btn-back:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    .btn-back:hover { background: #f0f0f0; color: #111; }
 
     /* アニメーション定義 */
     @keyframes dropIn {
@@ -147,7 +200,6 @@
   </div>
 
   <script>
-    // ラウンドの表記変換マップ
     const ROUND_NAMES = {
       "QF": "準々決勝",
       "SF": "準決勝",
@@ -157,7 +209,6 @@
       "決勝": "決勝"
     };
 
-    // 規定構造
     const DEFAULT_STRUCTURE = {
       "STANDARD": { "準々決勝": [1], "準決勝": [1], "決勝": [1] },
       "NEXT": { "準々決勝": [1, 2, 3, 4], "準決勝": [1, 2], "決勝": [1] },
@@ -171,7 +222,7 @@
     let currentDept = null;
     let currentRound = null;
     let currentMatch = null;
-    let currentSongTab = 'final';
+    let currentSongTab = null;
 
     fetchCSV();
 
@@ -210,34 +261,83 @@
     }
 
     function parseCSV(text) {
-      const rows = text.trim().split(/\r?\n/).map(r => r.split(','));
+      const rows = text.trim().split(/\r?\n/).map(r => r.split(',').map(c => c ? c.replace(/"/g, '').trim() : ''));
+      if (rows.length < 2) return;
+
+      const header = rows[0];
+
+      const idxDept = header.findIndex(h => h.includes('部門'));
+      const idxRound = header.findIndex(h => h.includes('ラウンド'));
+      const idxMatch = header.findIndex(h => h.includes('試合'));
+      const idxSongNum = header.findIndex(h => h.includes('曲番号') || h.includes('曲目'));
+      const idxSongName = header.findIndex(h => h.includes('曲名'));
+      const idxName = header.findIndex(h => h.includes('プレイヤー') || h.includes('名前') || h.includes('チーム'));
+      const idxP = header.findIndex(h => h.toUpperCase().includes('PERFECT'));
+      const idxG = header.findIndex(h => h.toUpperCase().includes('GREAT'));
+      const idxGd = header.findIndex(h => h.toUpperCase().includes('GOOD'));
+      const idxB = header.findIndex(h => h.toUpperCase().includes('BAD'));
+      const idxM = header.findIndex(h => h.toUpperCase().includes('MISS'));
+      const idxScore = header.findIndex(h => h.includes('得点') || h.includes('スコア'));
+      
+      let idxFlg = header.findIndex(h => h.toUpperCase().includes('AP') || h.toUpperCase().includes('FC') || h.includes('FLG') || h.includes('フラグ'));
+      if (idxFlg === -1) idxFlg = 11; // L列目
+
       treeData = {};
 
       for (let i = 1; i < rows.length; i++) {
-        let [dept, rawRound, match, songNum, songName, name, p, g, gd, b, m, scoreStr] 
-          = rows[i].map(c => c ? c.replace(/"/g, '').trim() : '');
+        const row = rows[i];
+        
+        const dept = idxDept !== -1 && row[idxDept] ? row[idxDept] : "共通";
+        const rawRound = idxRound !== -1 ? row[idxRound] : "";
+        const match = idxMatch !== -1 ? row[idxMatch] : "";
+        const songNum = idxSongNum !== -1 ? row[idxSongNum] : "";
+        const songName = idxSongName !== -1 ? row[idxSongName] : "";
+        const name = idxName !== -1 ? row[idxName] : "";
 
-        if (!dept || !rawRound || !match || !name) continue;
+        if (!rawRound || !match || !name) continue;
 
-        // QF/SF等の英名を和名（準々決勝・準決勝・決勝）に標準化
         const round = ROUND_NAMES[rawRound] || rawRound;
+        const p = idxP !== -1 ? row[idxP] : "0";
+        const g = idxG !== -1 ? row[idxG] : "0";
+        const gd = idxGd !== -1 ? row[idxGd] : "0";
+        const b = idxB !== -1 ? row[idxB] : "0";
+        const m = idxM !== -1 ? row[idxM] : "0";
+        const scoreStr = idxScore !== -1 ? row[idxScore] : "0";
         const score = parseInt(scoreStr, 10) || 0;
+        const flg = row[idxFlg] ? row[idxFlg].toUpperCase().trim() : "";
 
-        if (!treeData[dept]) treeData[dept] = {};
-        if (!treeData[dept][round]) treeData[dept][round] = {};
-        if (!treeData[dept][round][match]) treeData[dept][round][match] = [];
+        const targetDepts = (dept === "共通") ? ["STANDARD", "NEXT", "ULTIMATE", "DOUBLES"] : [dept];
 
-        treeData[dept][round][match].push({ songNum, songName, name, p, g, gd, b, m, score });
+        targetDepts.forEach(d => {
+          if (!treeData[d]) treeData[d] = {};
+          if (!treeData[d][round]) treeData[d][round] = {};
+          if (!treeData[d][round][match]) treeData[d][round][match] = [];
+
+          treeData[d][round][match].push({ songNum, songName, name, p, g, gd, b, m, score, flg });
+        });
       }
     }
 
-    // ULTIMATE準々決勝専用の試合名（GroupA/GroupB）の取得ヘルパー
     function getMatchDisplayName(dept, round, matchNum) {
       if (dept === 'ULTIMATE' && round === '準々決勝') {
         if (String(matchNum) === '1') return 'GroupA';
         if (String(matchNum) === '2') return 'GroupB';
       }
       return `第${matchNum}試合`;
+    }
+
+    // スコア数値の左上に斜めでAP/FCを重ねるレイアウト
+    function renderScoreCell(score, flg) {
+      const formattedScore = score.toLocaleString();
+      let badgeHTML = '';
+
+      if (flg === "AP" || flg === "ALL PERFECT") {
+        badgeHTML = `<span class="badge-ap">ALL PERFECT</span>`;
+      } else if (flg === "FC" || flg === "FULL COMBO") {
+        badgeHTML = `<span class="badge-fc">FULL COMBO</span>`;
+      }
+
+      return `<div class="score-box">${badgeHTML}<span>${formattedScore}</span></div>`;
     }
 
     function renderBreadcrumb() {
@@ -264,16 +364,27 @@
 
       if (currentMatch) {
         const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
-        html += ` ＞ <span class="breadcrumb-current">${matchLabel}</span>`;
+        html += ` ＞ `;
+        if (currentSongTab !== null) {
+          html += `<span class="breadcrumb-item" onclick="navTo('song')">${matchLabel}</span>`;
+        } else {
+          html += `<span class="breadcrumb-current">${matchLabel}</span>`;
+        }
+      }
+
+      if (currentSongTab !== null) {
+        const tabLabel = currentSongTab === 'final' ? '🏆 最終結果' : `${currentSongTab}曲目`;
+        html += ` ＞ <span class="breadcrumb-current">${tabLabel}</span>`;
       }
 
       nav.innerHTML = html;
     }
 
     function navTo(level) {
-      if (level === 'dept') { currentDept = null; currentRound = null; currentMatch = null; }
-      else if (level === 'round') { currentRound = null; currentMatch = null; }
-      else if (level === 'match') { currentMatch = null; }
+      if (level === 'dept') { currentDept = null; currentRound = null; currentMatch = null; currentSongTab = null; }
+      else if (level === 'round') { currentRound = null; currentMatch = null; currentSongTab = null; }
+      else if (level === 'match') { currentMatch = null; currentSongTab = null; }
+      else if (level === 'song') { currentSongTab = null; }
       render();
     }
 
@@ -303,7 +414,7 @@
         return;
       }
 
-      // 2. ラウンド選択（準々決勝・準決勝・決勝）
+      // 2. ラウンド選択
       if (!currentRound) {
         const defaultRounds = DEFAULT_STRUCTURE[currentDept] ? Object.keys(DEFAULT_STRUCTURE[currentDept]) : [];
         const csvRounds = treeData[currentDept] ? Object.keys(treeData[currentDept]) : [];
@@ -325,7 +436,7 @@
         return;
       }
 
-      // 3. 試合選択（第1試合... または GroupA/GroupB）
+      // 3. 試合選択
       if (!currentMatch) {
         const defaultMatches = DEFAULT_STRUCTURE[currentDept]?.[currentRound] 
           ? DEFAULT_STRUCTURE[currentDept][currentRound].map(String) : [];
@@ -339,7 +450,7 @@
           return `
             <div class="selection-card" onclick="selectMatch('${m}')">
               ${displayLabel}
-              <div class="sub">結果を見る</div>
+              <div class="sub">曲選択へ進む</div>
             </div>
           `;
         }).join('');
@@ -353,29 +464,61 @@
         return;
       }
 
+      // 4. 曲目・最終結果 選択
+      if (currentSongTab === null) {
+        const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
+        const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
+
+        if (matchRows.length === 0) {
+          view.innerHTML = `
+            <h1>${currentDept}部門 - ${currentRound} ${matchLabel}</h1>
+            <div style="padding: 50px 20px; background: #ffffff; border-radius: 12px; border: 1px dashed #cccccc; margin-top: 20px;">
+              <p style="font-size: 1.3rem; color: #666666; margin-bottom: 10px; font-weight: bold;">📭 データがありません</p>
+              <p style="font-size: 0.95rem; color: #888888; margin: 0;">この試合のリザルトデータはまだスプレッドシートに登録されていません。</p>
+            </div>
+            <button class="btn-back" onclick="navTo('match')">← 試合選択に戻る</button>
+          `;
+          return;
+        }
+
+        let songNums = Array.from(new Set(matchRows.map(r => r.songNum).filter(Boolean))).sort((a,b) => a - b);
+        if (songNums.length === 0) songNums = ["1", "2", "3"];
+
+        let songCardsHTML = songNums.map(num => `
+          <div class="selection-card" onclick="selectSongTab('${num}')">
+            ${num}曲目
+            <div class="sub">${num}曲目のスコア結果</div>
+          </div>
+        `).join('');
+
+        songCardsHTML += `
+          <div class="selection-card gold-card" onclick="selectSongTab('final')">
+            🏆 最終結果
+            <div class="sub">総合スコア・最終順位</div>
+          </div>
+        `;
+
+        view.innerHTML = `
+          <h1>表示する結果を選択してください</h1>
+          <p class="subtitle">【${currentDept}部門 / ${currentRound} ${matchLabel}】</p>
+          <div class="card-grid">${songCardsHTML}</div>
+          <button class="btn-back" onclick="navTo('match')">← 試合選択に戻る</button>
+        `;
+        return;
+      }
+
+      // 5. リザルト表示
       renderResultView(view);
     }
 
     function selectDept(d) { currentDept = d; render(); }
     function selectRound(r) { currentRound = r; render(); }
-    function selectMatch(m) { currentMatch = m; currentSongTab = 'final'; render(); }
+    function selectMatch(m) { currentMatch = m; currentSongTab = null; render(); }
+    function selectSongTab(tab) { currentSongTab = tab; render(); }
 
     function renderResultView(view) {
       const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
       const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
-      
-      // データが存在しない（未入力）の場合
-      if (matchRows.length === 0) {
-        view.innerHTML = `
-          <h1>${currentDept}部門 - ${currentRound} ${matchLabel}</h1>
-          <div style="padding: 50px 20px; background: rgba(255, 255, 255, 0.08); border-radius: 12px; border: 1px dashed rgba(255, 255, 255, 0.2); margin-top: 20px;">
-            <p style="font-size: 1.3rem; color: #b0b8d0; margin-bottom: 10px; font-weight: bold;">📭 データがありません</p>
-            <p style="font-size: 0.95rem; color: #8a94ad; margin: 0;">この試合のリザルトデータはまだスプレッドシートに登録されていません。</p>
-          </div>
-          <button class="btn-back" onclick="navTo('match')">← 試合選択に戻る</button>
-        `;
-        return;
-      }
 
       const isDoubles = currentDept.toUpperCase().includes("DOUBLES");
       const songMap = {};
@@ -391,10 +534,11 @@
           }
 
           if (!teamScores[entityName]) {
-            teamScores[entityName] = { total: 0, songs: {}, p: 0, g: 0, gd: 0, b: 0, m: 0 };
+            teamScores[entityName] = { total: 0, songs: {}, flgs: {}, p: 0, g: 0, gd: 0, b: 0, m: 0 };
           }
           
           teamScores[entityName].songs[r.songNum] = (teamScores[entityName].songs[r.songNum] || 0) + r.score;
+          teamScores[entityName].flgs[r.songNum] = r.flg;
           teamScores[entityName].total += r.score;
 
           teamScores[entityName].p += (parseInt(r.p, 10) || 0);
@@ -405,20 +549,18 @@
         }
       });
 
-      // CSVにある全曲目番号、もしくはデータ上の1, 2, 3曲目を抽出してセット
       let csvSongNums = Object.keys(songMap);
       if (csvSongNums.length === 0) csvSongNums = ["1", "2", "3"];
       const songNums = Array.from(new Set([...csvSongNums])).sort((a,b) => a - b);
 
-      // タブ生成：1曲目、2曲目、3曲目... ＋ 🏆 最終結果
       let tabsHTML = songNums.map(num => `
-        <button class="tab-btn ${currentSongTab === num ? 'active' : ''}" onclick="switchTab('${num}')">
+        <button class="tab-btn ${currentSongTab === num ? 'active' : ''}" onclick="selectSongTab('${num}')">
           ${num}曲目
         </button>
       `).join('');
 
       tabsHTML += `
-        <button class="tab-btn ${currentSongTab === 'final' ? 'active' : ''}" onclick="switchTab('final')">
+        <button class="tab-btn ${currentSongTab === 'final' ? 'active' : ''}" onclick="selectSongTab('final')">
           🏆 最終結果
         </button>
       `;
@@ -461,11 +603,13 @@
           `;
 
           songNums.forEach(num => {
-            const sScore = p.songs[num] !== undefined ? p.songs[num].toLocaleString() : '-';
-            row += `<td class="sub-score anim-item anim-song">${sScore}</td>`;
+            const sScore = p.songs[num] !== undefined ? p.songs[num] : 0;
+            const sFlg = p.flgs[num] || "";
+            const cellContent = p.songs[num] !== undefined ? renderScoreCell(sScore, sFlg) : '-';
+            row += `<td class="sub-score anim-item anim-song">${cellContent}</td>`;
           });
 
-          row += `<td class="score anim-item anim-score">${p.total.toLocaleString()}</td></tr>`;
+          row += `<td class="score anim-item anim-score">${renderScoreCell(p.total, "")}</td></tr>`;
           return row;
         }).join('');
 
@@ -496,7 +640,7 @@
               <td class="p-good anim-item anim-gd">${parseInt(p.gd, 10).toLocaleString()}</td>
               <td class="p-bad anim-item anim-b">${parseInt(p.b, 10).toLocaleString()}</td>
               <td class="p-miss anim-item anim-m">${parseInt(p.m, 10).toLocaleString()}</td>
-              <td class="score">${p.score.toLocaleString()}</td>
+              <td class="score">${renderScoreCell(p.score, p.flg)}</td>
             </tr>
           `;
         }).join('');
@@ -512,13 +656,8 @@
             <tbody>${tableBody}</tbody>
           </table>
         </div>
-        <button class="btn-back" onclick="navTo('match')">← 試合選択に戻る</button>
+        <button class="btn-back" onclick="navTo('song')">← 結果選択に戻る</button>
       `;
-    }
-
-    function switchTab(tab) {
-      currentSongTab = tab;
-      render();
     }
   </script>
 </body>
