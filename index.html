@@ -6,19 +6,17 @@
   <style>
     * { box-sizing: border-box; }
     
-    /* 1920x1080のOBSにピタリと収まり、プレビューでも見切れない設定 */
     html, body {
       width: 100vw;
       height: 100vh;
       margin: 0;
       padding: 0;
-      overflow: hidden; /* スクロールバーを完全に消去 */
+      overflow: hidden;
       font-family: 'Helvetica Neue', Arial, sans-serif;
       background: #f4f6f9;
       color: #333333;
     }
 
-    /* 全体コンテナ */
     .container {
       width: 100%;
       height: 100%;
@@ -31,7 +29,6 @@
       justify-content: flex-start;
     }
 
-    /* パンくずリスト */
     .breadcrumb {
       display: flex; justify-content: center; align-items: center; gap: 10px;
       margin-bottom: 20px; font-size: 1.1rem; color: #666666;
@@ -40,11 +37,9 @@
     .breadcrumb-item:hover { color: #003399; }
     .breadcrumb-current { color: #111111; font-weight: bold; }
 
-    /* タイトルエリア */
     h1 { color: #111111; font-size: 2.2rem; margin: 0 0 10px 0; text-align: center; }
     p.subtitle { color: #666666; font-size: 1.1rem; margin: 0 0 30px 0; text-align: center; }
 
-    /* カード・ボタン（見切れ防止のためFlexboxで中央揃え） */
     .card-grid {
       display: flex;
       flex-wrap: wrap;
@@ -73,7 +68,6 @@
     .selection-card.gold-card:hover { background: #fff9d6; border-color: #d4a000; box-shadow: 0 8px 20px rgba(212, 160, 0, 0.2); }
     .selection-card .sub { font-size: 0.95rem; color: #666666; font-weight: normal; margin-top: 8px; }
 
-    /* タブ切り替え */
     .tab-container { display: flex; justify-content: center; gap: 12px; margin-bottom: 15px; }
     .tab-btn {
       background: #ffffff; border: 1px solid #cccccc; color: #333333;
@@ -82,13 +76,11 @@
     .tab-btn:hover { background: #e8f2ff; }
     .tab-btn.active { background: #0066cc; color: #ffffff; font-weight: bold; border-color: #0066cc; box-shadow: 0 3px 10px rgba(0, 102, 204, 0.3); }
 
-    /* 強調表示する曲名 */
     .song-title-banner {
       font-size: 1.8rem; font-weight: bold; color: #111111;
       margin-bottom: 15px; letter-spacing: 0.5px; text-align: center;
     }
 
-    /* リザルトテーブル */
     .table-container {
       background: #ffffff; border-radius: 14px; border: 1px solid #e1e4e8;
       overflow: hidden; width: 100%; max-width: 1600px; box-shadow: 0 6px 20px rgba(0,0,0,0.06);
@@ -100,31 +92,23 @@
     .row-header { background: #f8fafc; font-weight: bold; color: #004499; text-align: right; width: 220px; font-size: 1.15rem; }
     .player-header { background: #e8f2ff; color: #004499; font-size: 1.3rem; font-weight: bold; }
 
-    /* ダブルスチーム用カラー分岐 */
+    /* DOUBLESチーム用カラー分岐 */
     .team-col-0 { background: #f0f7ff !important; color: #0055bb !important; border-bottom: 2px solid #0066cc !important; }
     .team-col-1 { background: #fff5f0 !important; color: #cc4400 !important; border-bottom: 2px solid #ff6600 !important; }
 
-    /* PERFECT等 */
-    .p-perfect {
-      background: linear-gradient(90deg, #00d2ff 0%, #ff66c4 100%);
-      color: transparent;
-      -webkit-background-clip: text;
-      background-clip: text;
-      font-weight: 900;
-      font-size: 1.2rem;
-      filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.15));
-    }
-    .p-great { color: #ff85c0; font-weight: bold; font-size: 1.2rem; }
-    .p-good { color: #00aaff; font-weight: bold; font-size: 1.2rem; }
-    .p-bad { color: #66cc00; font-weight: bold; font-size: 1.2rem; }
-    .p-miss { color: #888888; font-weight: bold; font-size: 1.2rem; }
+    /* 高コントラスト・ハッキリ見える視認性強化カラー */
+    .p-perfect { color: #0077cc; font-weight: 900; font-size: 1.25rem; }
+    .p-great { color: #d0006f; font-weight: bold; font-size: 1.2rem; }
+    .p-good { color: #008800; font-weight: bold; font-size: 1.2rem; }
+    .p-bad { color: #dd6600; font-weight: bold; font-size: 1.2rem; }
+    .p-miss { color: #555555; font-weight: bold; font-size: 1.2rem; }
 
     .score { font-family: monospace; font-size: 1.5rem; color: #006699; font-weight: bold; }
     .sub-score { font-family: monospace; font-size: 1.25rem; color: #333333; }
     
     .score-top {
       font-size: 1.8rem !important; color: #d4a000 !important; font-weight: 900 !important;
-      text-shadow: 0 0 10px rgba(212, 160, 0, 0.5); transform: scale(1.08); display: inline-block;
+      text-shadow: 0 0 10px rgba(212, 160, 0, 0.3); transform: scale(1.08); display: inline-block;
     }
 
     .rank-1 { color: #d4a000; font-size: 1.5rem; font-weight: bold; }
@@ -139,22 +123,15 @@
       white-space: nowrap;
     }
     .badge-ap {
-      background: linear-gradient(90deg, #00d2ff 0%, #ff66c4 100%);
-      color: transparent;
-      -webkit-background-clip: text;
-      background-clip: text;
-      filter: drop-shadow(0 0 2px rgba(0, 210, 255, 0.5));
+      color: #0077cc;
+      filter: drop-shadow(0 0 2px rgba(0, 119, 204, 0.4));
     }
-    .badge-fc { color: #ff85c0; text-shadow: 0 0 2px #ffb3d9; }
-
-    .p1-tag { color: #0066cc; font-weight: bold; }
-    .p2-tag { color: #cc0066; font-weight: bold; }
-    .pair-container { display: flex; justify-content: center; gap: 14px; font-size: 1.1rem; }
+    .badge-fc { color: #d0006f; }
 
     .btn-back { margin-top: 30px; background: #ffffff; border: 1px solid #cccccc; color: #555555; padding: 10px 30px; font-size: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
     .btn-back:hover { background: #f0f0f0; color: #111; }
 
-    /* アニメーション演出（初期状態：透明＆非表示） */
+    /* アニメーション */
     @keyframes dropIn { 0% { opacity: 0; transform: translateY(-6px); } 100% { opacity: 1; transform: translateY(0); } }
     .anim-target { opacity: 0; display: inline-block; visibility: hidden; }
     .anim-visible { animation: dropIn 0.3s ease forwards; visibility: visible; }
@@ -405,9 +382,9 @@
           teamData[teamName].b += (parseInt(r.b, 10) || 0);
           teamData[teamName].m += (parseInt(r.m, 10) || 0);
 
-          if (isDoubles && r.songNum === "3" && pName) {
-            if (!teamData[teamName].members[pName]) teamData[teamName].members[pName] = { p: 0, g: 0, gd: 0, b: 0, m: 0, score: 0 };
-            teamData[teamName].members[pName] = { p: r.p, g: r.g, gd: r.gd, b: r.b, m: r.m, score: r.score };
+          if (isDoubles && pName) {
+            teamData[teamName].members[pName] = teamData[teamName].members[pName] || {};
+            teamData[teamName].members[pName][r.songNum] = { p: r.p, g: r.g, gd: r.gd, b: r.b, m: r.m, score: r.score, flg: r.flg };
           }
         }
       });
@@ -422,13 +399,7 @@
       if (currentSongTab === 'final') {
         titleBannerHTML = `<div class="song-title-banner">最終結果</div>`;
 
-        let allTotals = [];
-        if (isDoubles && Object.keys(csvFinalRows).length > 0) {
-          allTotals = teamOrder.map(n => csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total);
-        } else {
-          allTotals = teamOrder.map(n => teamData[n].total);
-        }
-
+        let allTotals = teamOrder.map(n => (isDoubles && csvFinalRows[n]) ? csvFinalRows[n].score : teamData[n].total);
         const maxScore = Math.max(...allTotals);
         const rankMap = calculateRanks(allTotals);
 
@@ -472,39 +443,51 @@
         tableHTML = `<thead>${headerRow}</thead><tbody>${songRows}${summaryRows}${totalRow}${rankRow}</tbody>`;
 
       } else {
-        const targetSongRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
         const songNameStr = songMap[currentSongTab] ? songMap[currentSongTab] : `${currentSongTab}曲目`;
         titleBannerHTML = `<div class="song-title-banner">${currentSongTab}曲目：${songNameStr}</div>`;
 
-        const maxScore = targetSongRows.length > 0 ? Math.max(...targetSongRows.map(r => r.score)) : -1;
+        let columns = [];
+        if (isDoubles) {
+          teamOrder.forEach((tName, teamIdx) => {
+            const members = Object.keys(teamData[tName].members);
+            if (members.length > 0) {
+              members.forEach(mName => {
+                columns.push({
+                  header: `${tName}<br><small style="font-size:0.95rem; font-weight:normal;">(${mName})</small>`,
+                  teamIdx: teamIdx,
+                  data: teamData[tName].members[mName]?.[currentSongTab]
+                });
+              });
+            } else {
+              columns.push({ header: tName, teamIdx: teamIdx, data: null });
+            }
+          });
+        } else {
+          const targetSongRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
+          teamOrder.forEach((tName, teamIdx) => {
+            const rowData = targetSongRows.find(r => r.name.includes(tName));
+            columns.push({ header: tName, teamIdx: teamIdx, data: rowData });
+          });
+        }
+
+        const validScores = columns.map(c => c.data ? c.data.score : -1);
+        const maxScore = validScores.length > 0 ? Math.max(...validScores) : -1;
 
         let headerRow = `<tr><th class="row-header"></th>` +
-          teamOrder.map((name, idx) => `<th class="player-header ${isDoubles ? 'team-col-' + (idx % 2) : ''}">${name}</th>`).join('') + `</tr>`;
+          columns.map(col => `<th class="player-header team-col-${col.teamIdx % 2}">${col.header}</th>`).join('') + `</tr>`;
 
-        const getValHTML = (n, key) => {
-          if (isDoubles && currentSongTab === "3") {
-            const mKeys = Object.keys(teamData[n].members);
-            if (mKeys.length >= 2) {
-              const p1Val = teamData[n].members[mKeys[0]][key];
-              const p2Val = teamData[n].members[mKeys[1]][key];
-              return `<div class="pair-container"><span class="p1-tag">${p1Val}</span><span>/</span><span class="p2-tag">${p2Val}</span></div>`;
-            }
-          }
-          const rowData = targetSongRows.find(r => r.name.includes(n));
-          return rowData ? parseInt(rowData[key], 10).toLocaleString() : '-';
-        };
+        const getValStr = (col, key) => col.data ? parseInt(col.data[key] || 0, 10).toLocaleString() : '-';
 
-        let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => `<td class="p-perfect"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'p')}</span></td>`).join('') + `</tr>`;
-        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + teamOrder.map(n => `<td class="p-great"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'g')}</span></td>`).join('') + `</tr>`;
-        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + teamOrder.map(n => `<td class="p-good"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'gd')}</span></td>`).join('') + `</tr>`;
-        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + teamOrder.map(n => `<td class="p-bad"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'b')}</span></td>`).join('') + `</tr>`;
-        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + teamOrder.map(n => `<td class="p-miss"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'm')}</span></td>`).join('') + `</tr>`;
+        let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + columns.map(c => `<td class="p-perfect"><span class="anim-target" data-anim-step="1">${getValStr(c, 'p')}</span></td>`).join('') + `</tr>`;
+        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + columns.map(c => `<td class="p-great"><span class="anim-target" data-anim-step="1">${getValStr(c, 'g')}</span></td>`).join('') + `</tr>`;
+        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + columns.map(c => `<td class="p-good"><span class="anim-target" data-anim-step="1">${getValStr(c, 'gd')}</span></td>`).join('') + `</tr>`;
+        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + columns.map(c => `<td class="p-bad"><span class="anim-target" data-anim-step="1">${getValStr(c, 'b')}</span></td>`).join('') + `</tr>`;
+        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + columns.map(c => `<td class="p-miss"><span class="anim-target" data-anim-step="1">${getValStr(c, 'm')}</span></td>`).join('') + `</tr>`;
 
-        let scoreRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">得点</td>` + teamOrder.map(n => {
-          const rowData = targetSongRows.find(r => r.name.includes(n));
-          if (!rowData) return `<td class="score">-</td>`;
-          const isTop = rowData.score === maxScore && maxScore > 0;
-          return `<td class="score"><span class="anim-target" data-anim-step="2">${renderScoreCell(rowData.score, rowData.flg, isTop, true)}</span></td>`;
+        let scoreRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">得点</td>` + columns.map(c => {
+          if (!c.data) return `<td class="score">-</td>`;
+          const isTop = c.data.score === maxScore && maxScore > 0;
+          return `<td class="score"><span class="anim-target" data-anim-step="2">${renderScoreCell(c.data.score, c.data.flg, isTop, true)}</span></td>`;
         }).join('') + `</tr>`;
 
         tableHTML = `<thead>${headerRow}</thead><tbody>${pRow}${gRow}${gdRow}${bRow}${mRow}${scoreRow}</tbody>`;
