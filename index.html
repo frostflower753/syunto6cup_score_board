@@ -88,19 +88,31 @@
     th, td { padding: 12px 16px; font-size: 0.95rem; border-bottom: 1px solid #e1e4e8; border-right: 1px solid #f0f0f0; }
     th:last-child, td:last-child { border-right: none; }
     
-    .row-header { background: #f8fafc; font-weight: bold; color: #004499; text-align: right; width: 150px; }
+    .row-header { background: #f8fafc; font-weight: bold; color: #004499; text-align: right; width: 160px; }
     .player-header { background: #e8f2ff; color: #004499; font-size: 1.1rem; font-weight: bold; }
 
-    /* 判定用カラー */
-    .p-perfect { color: #d4a000; font-weight: bold; }
-    .p-great { color: #008800; font-weight: bold; }
-    .p-good { color: #0088cc; }
-    .p-bad { color: #cc00cc; }
-    .p-miss { color: #cc0000; }
+    /* ダブルスチーム用カラー分岐 */
+    .team-col-0 { background: #f0f7ff !important; color: #0055bb !important; border-bottom: 2px solid #0066cc !important; }
+    .team-col-1 { background: #fff5f0 !important; color: #cc4400 !important; border-bottom: 2px solid #ff6600 !important; }
+
+    /* 指定された判定用カラー（プロセカALL PERFECTイメージのパステルレインボー） */
+    .p-perfect {
+      background: linear-gradient(135deg, #70f3ff 0%, #a8ffeb 25%, #ffffff 50%, #ffb8e7 75%, #d194ff 100%);
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      font-weight: 900;
+      filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.2));
+    }
+    .p-great { color: #e60073; font-weight: bold; } /* ピンク */
+    .p-good { color: #00aaff; font-weight: bold; }  /* 水色 */
+    .p-bad { color: #66cc00; font-weight: bold; }   /* 黄緑 */
+    .p-miss { color: #888888; font-weight: bold; }  /* 灰色 */
+
     .score { font-family: monospace; font-size: 1.25rem; color: #006699; font-weight: bold; }
     .sub-score { font-family: monospace; font-size: 1.05rem; color: #333333; }
     
-    /* 1位・勝利の強調 */
+    /* 最高得点の強調 */
     .score-top {
       font-size: 1.6rem !important; color: #d4a000 !important; font-weight: 900 !important;
       text-shadow: 0 0 10px rgba(212, 160, 0, 0.5); transform: scale(1.08); display: inline-block;
@@ -111,10 +123,21 @@
     .rank-3 { color: #b85c00; font-size: 1.1rem; font-weight: bold; }
 
     .score-box { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 6px; }
-    .badge-ap, .badge-fc { position: absolute; top: -6px; left: -15px; font-size: 0.68rem; font-weight: 900; transform: rotate(-15deg); pointer-events: none; }
-    .badge-ap { background: linear-gradient(90deg, #ff0000, #ff7f00, #e6b800, #00aa00, #0088cc, #8b00ff); background-size: 200% auto; color: transparent; -webkit-background-clip: text; background-clip: text; animation: rainbow 2s linear infinite; }
+    /* バッジ位置をさらに左側（left: -25px）に修正 */
+    .badge-ap, .badge-fc {
+      position: absolute; top: -6px; left: -25px;
+      font-size: 0.72rem; font-weight: 900;
+      transform: rotate(-12deg); pointer-events: none;
+      white-space: nowrap;
+    }
+    .badge-ap {
+      background: linear-gradient(135deg, #70f3ff 0%, #a8ffeb 25%, #ffffff 50%, #ffb8e7 75%, #d194ff 100%);
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      filter: drop-shadow(0 0 2px rgba(112, 243, 255, 0.6));
+    }
     .badge-fc { color: #e60073; text-shadow: 0 0 2px #ffb3d9; }
-    @keyframes rainbow { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
 
     /* ダブルス 2人表示用カラー */
     .p1-tag { color: #0066cc; font-weight: bold; }
@@ -347,6 +370,7 @@
       const songMap = {};
       const teamOrder = [];
       const teamData = {};
+      const csvFinalRows = {};
 
       matchRows.forEach(r => {
         let teamName = r.name;
@@ -360,6 +384,11 @@
         if (!teamData[teamName]) {
           teamOrder.push(teamName);
           teamData[teamName] = { total: 0, songs: {}, flgs: {}, members: {}, p: 0, g: 0, gd: 0, b: 0, m: 0 };
+        }
+
+        if (r.songNum === "合計" || r.songNum === "最終結果" || r.songNum === "total") {
+          csvFinalRows[teamName] = r;
+          return;
         }
 
         if (r.songNum) {
@@ -389,14 +418,19 @@
       let tableHTML = "";
 
       if (currentSongTab === 'final') {
-        const allTotals = teamOrder.map(n => teamData[n].total);
+        let allTotals = [];
+        if (isDoubles && Object.keys(csvFinalRows).length > 0) {
+          allTotals = teamOrder.map(n => csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total);
+        } else {
+          allTotals = teamOrder.map(n => teamData[n].total);
+        }
+
         const maxScore = Math.max(...allTotals);
         const rankMap = calculateRanks(allTotals);
 
         let headerRow = `<tr><th class="row-header">${isDoubles ? 'チーム' : '項目 / プレイヤー'}</th>` +
-          teamOrder.map(name => `<th class="player-header">${name}</th>`).join('') + `</tr>`;
+          teamOrder.map((name, idx) => `<th class="player-header ${isDoubles ? 'team-col-' + (idx % 2) : ''}">${name}</th>`).join('') + `</tr>`;
 
-        // 曲目スコア行（Enterを押すごとにステップ表示: data-anim-step）
         let songRows = songNums.map((num, idx) => {
           const sName = songMap[num] ? `<br><small style="font-weight:normal; color:#555;">（${songMap[num]}）</small>` : '';
           let row = `<tr><td class="row-header">${num}曲目${sName}</td>`;
@@ -411,37 +445,38 @@
 
         let summaryRows = "";
         if (isDoubles) {
-          // ダブルスのみ判定数の総和を表示
-          summaryRows += `<tr><td class="row-header p-perfect">PERFECT 合計</td>` + teamOrder.map(n => `<td class="p-perfect anim-target" data-anim-step="4">${teamData[n].p.toLocaleString()}</td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + teamOrder.map(n => `<td class="p-great anim-target" data-anim-step="4">${teamData[n].g.toLocaleString()}</td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + teamOrder.map(n => `<td class="p-good anim-target" data-anim-step="4">${teamData[n].gd.toLocaleString()}</td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + teamOrder.map(n => `<td class="p-bad anim-target" data-anim-step="4">${teamData[n].b.toLocaleString()}</td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + teamOrder.map(n => `<td class="p-miss anim-target" data-anim-step="4">${teamData[n].m.toLocaleString()}</td>`).join('') + `</tr>`;
+          const getVal = (n, key) => (csvFinalRows[n] ? csvFinalRows[n][key] : teamData[n][key]).toLocaleString();
+          summaryRows += `<tr><td class="row-header p-perfect">PERFECT 合計</td>` + teamOrder.map(n => `<td class="p-perfect anim-target" data-anim-step="4">${getVal(n, 'p')}</td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + teamOrder.map(n => `<td class="p-great anim-target" data-anim-step="4">${getVal(n, 'g')}</td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + teamOrder.map(n => `<td class="p-good anim-target" data-anim-step="4">${getVal(n, 'gd')}</td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + teamOrder.map(n => `<td class="p-bad anim-target" data-anim-step="4">${getVal(n, 'b')}</td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + teamOrder.map(n => `<td class="p-miss anim-target" data-anim-step="4">${getVal(n, 'm')}</td>`).join('') + `</tr>`;
         }
 
         const totalStepNum = isDoubles ? 5 : 4;
         let totalRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#006699;">合計得点</td>` + teamOrder.map(n => {
-          const isWinner = teamData[n].total === maxScore && maxScore > 0;
-          return `<td class="score anim-target" data-anim-step="${totalStepNum}">${renderScoreCell(teamData[n].total, "", isWinner, false)}</td>`;
+          const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
+          const isWinner = finalScore === maxScore && maxScore > 0;
+          return `<td class="score anim-target" data-anim-step="${totalStepNum}">${renderScoreCell(finalScore, "", isWinner, false)}</td>`;
         }).join('') + `</tr>`;
 
         let rankRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#111;">順位</td>` + teamOrder.map(n => {
-          const rank = rankMap.get(teamData[n].total);
+          const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
+          const rank = rankMap.get(finalScore);
           return `<td class="${rank <= 3 ? 'rank-' + rank : ''} anim-target" data-anim-step="${totalStepNum}">${rank}位</td>`;
         }).join('') + `</tr>`;
 
         tableHTML = `<thead>${headerRow}</thead><tbody>${songRows}${summaryRows}${totalRow}${rankRow}</tbody>`;
 
       } else {
-        // 個別曲目画面（1〜3曲目）
         const targetSongRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
         const currentSongName = songMap[currentSongTab] ? `（${songMap[currentSongTab]}）` : '';
         const maxScore = targetSongRows.length > 0 ? Math.max(...targetSongRows.map(r => r.score)) : -1;
 
         let headerRow = `<tr><th class="row-header">${isDoubles ? 'チーム' : '項目 / プレイヤー'}<br><small style="font-weight:normal;">${currentSongName}</small></th>` +
-          teamOrder.map(name => `<th class="player-header">${name}</th>`).join('') + ` stream</tr>`;
+          teamOrder.map((name, idx) => `<th class="player-header ${isDoubles ? 'team-col-' + (idx % 2) : ''}">${name}</th>`).join('') + `</tr>`;
 
-        const getValHTML = (n, key, cls) => {
+        const getValHTML = (n, key) => {
           if (isDoubles && currentSongTab === "3") {
             const mKeys = Object.keys(teamData[n].members);
             if (mKeys.length >= 2) {
@@ -454,17 +489,17 @@
           return rowData ? parseInt(rowData[key], 10).toLocaleString() : '-';
         };
 
-        let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => `<td class="p-perfect anim-target" data-anim-step="1">${getValHTML(n, 'p')}</td>`).join('') + `</tr>`;
-        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + teamOrder.map(n => `<td class="p-great anim-target" data-anim-step="2">${getValHTML(n, 'g')}</td>`).join('') + `</tr>`;
-        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + teamOrder.map(n => `<td class="p-good anim-target" data-anim-step="3">${getValHTML(n, 'gd')}</td>`).join('') + `</tr>`;
-        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + teamOrder.map(n => `<td class="p-bad anim-target" data-anim-step="4">${getValHTML(n, 'b')}</td>`).join('') + `</tr>`;
-        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + teamOrder.map(n => `<td class="p-miss anim-target" data-anim-step="5">${getValHTML(n, 'm')}</td>`).join('') + `</tr>`;
+        let pRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => `<td class="p-perfect">${getValHTML(n, 'p')}</td>`).join('') + `</tr>`;
+        let gRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header p-great">GREAT</td>` + teamOrder.map(n => `<td class="p-great">${getValHTML(n, 'g')}</td>`).join('') + `</tr>`;
+        let gdRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header p-good">GOOD</td>` + teamOrder.map(n => `<td class="p-good">${getValHTML(n, 'gd')}</td>`).join('') + `</tr>`;
+        let bRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header p-bad">BAD</td>` + teamOrder.map(n => `<td class="p-bad">${getValHTML(n, 'b')}</td>`).join('') + `</tr>`;
+        let mRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header p-miss">MISS</td>` + teamOrder.map(n => `<td class="p-miss">${getValHTML(n, 'm')}</td>`).join('') + `</tr>`;
 
-        let scoreRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#006699;">得点</td>` + teamOrder.map(n => {
+        let scoreRow = `<tr class="anim-target" data-anim-step="1"><td class="row-header" style="font-size:1.1rem; color:#006699;">得点</td>` + teamOrder.map(n => {
           const rowData = targetSongRows.find(r => r.name.includes(n));
-          if (!rowData) return `<td class="score anim-target" data-anim-step="6">-</td>`;
+          if (!rowData) return `<td class="score">-</td>`;
           const isTop = rowData.score === maxScore && maxScore > 0;
-          return `<td class="score anim-target" data-anim-step="6">${renderScoreCell(rowData.score, rowData.flg, isTop, true)}</td>`;
+          return `<td class="score">${renderScoreCell(rowData.score, rowData.flg, isTop, true)}</td>`;
         }).join('') + `</tr>`;
 
         tableHTML = `<thead>${headerRow}</thead><tbody>${pRow}${gRow}${gdRow}${bRow}${mRow}${scoreRow}</tbody>`;
@@ -473,7 +508,7 @@
       view.innerHTML = `
         <h1>${currentDept}部門 - ${currentRound} ${matchLabel}</h1>
         <div class="tab-container">${tabsHTML}</div>
-        <div class="anim-hint">⌨️ <b>Enterキー</b> を押すたびに結果が順に進みます</div>
+        <div class="anim-hint">⌨️ <b>Enterキー</b> を押すと結果が表示されます</div>
         <div class="table-container" id="table-box"><table>${tableHTML}</table></div>
         <button class="btn-back" onclick="navTo('song')">← 結果選択に戻る</button>
       `;
