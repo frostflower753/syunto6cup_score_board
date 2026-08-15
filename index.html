@@ -137,9 +137,9 @@
     .btn-back { margin-top: 35px; margin-bottom: 20px; background: #ffffff; border: 1px solid #cccccc; color: #555555; padding: 10px 24px; font-size: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
     .btn-back:hover { background: #f0f0f0; color: #111; }
 
-    /* アニメーション演出 */
+    /* アニメーション演出（初期隠し → Enterで出現） */
     @keyframes dropIn { 0% { opacity: 0; transform: translateY(-6px); } 100% { opacity: 1; transform: translateY(0); } }
-    .anim-target { opacity: 0; }
+    .anim-target { opacity: 0; display: inline-block; }
     .anim-visible { animation: dropIn 0.3s ease forwards; }
   </style>
 </head>
@@ -416,15 +416,15 @@
         let headerRow = `<tr><th class="row-header"></th>` +
           teamOrder.map((name, idx) => `<th class="player-header ${isDoubles ? 'team-col-' + (idx % 2) : ''}">${name}</th>`).join('') + `</tr>`;
 
-        /* 各曲目のスコア（1回目のEnterで曲別スコア一括表示） */
-        let songRows = songNums.map(num => {
+        /* 最終結果: 1曲ごとに Enter 1~3回で順次表示 */
+        let songRows = songNums.map((num, idx) => {
           const sName = songMap[num] ? `<br><small style="font-weight:normal; color:#555;">（${songMap[num]}）</small>` : '';
           let row = `<tr><td class="row-header">${num}曲目${sName}</td>`;
           teamOrder.forEach(n => {
             const sScore = teamData[n].songs[num] !== undefined ? teamData[n].songs[num] : 0;
             const sFlg = teamData[n].flgs[num] || "";
             const cellContent = teamData[n].songs[num] !== undefined ? renderScoreCell(sScore, sFlg, false, true) : '-';
-            row += `<td class="sub-score"><span class="anim-target" data-anim-step="1">${cellContent}</span></td>`;
+            row += `<td class="sub-score"><span class="anim-target" data-anim-step="${idx + 1}">${cellContent}</span></td>`;
           });
           return row + `</tr>`;
         }).join('');
@@ -432,24 +432,24 @@
         let summaryRows = "";
         if (isDoubles) {
           const getVal = (n, key) => (csvFinalRows[n] ? csvFinalRows[n][key] : teamData[n][key]).toLocaleString();
-          summaryRows += `<tr><td class="row-header p-perfect">PERFECT 合計</td>` + teamOrder.map(n => `<td class="p-perfect"><span class="anim-target" data-anim-step="1">${getVal(n, 'p')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + teamOrder.map(n => `<td class="p-great"><span class="anim-target" data-anim-step="1">${getVal(n, 'g')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + teamOrder.map(n => `<td class="p-good"><span class="anim-target" data-anim-step="1">${getVal(n, 'gd')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + teamOrder.map(n => `<td class="p-bad"><span class="anim-target" data-anim-step="1">${getVal(n, 'b')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + teamOrder.map(n => `<td class="p-miss"><span class="anim-target" data-anim-step="1">${getVal(n, 'm')}</span></td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-perfect">PERFECT 合計</td>` + teamOrder.map(n => `<td class="p-perfect"><span class="anim-target" data-anim-step="4">${getVal(n, 'p')}</span></td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + teamOrder.map(n => `<td class="p-great"><span class="anim-target" data-anim-step="4">${getVal(n, 'g')}</span></td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + teamOrder.map(n => `<td class="p-good"><span class="anim-target" data-anim-step="4">${getVal(n, 'gd')}</span></td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + teamOrder.map(n => `<td class="p-bad"><span class="anim-target" data-anim-step="4">${getVal(n, 'b')}</span></td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + teamOrder.map(n => `<td class="p-miss"><span class="anim-target" data-anim-step="4">${getVal(n, 'm')}</span></td>`).join('') + `</tr>`;
         }
 
-        /* 2回目のEnterで合計点と順位を表示 */
+        /* 4回目のEnterで【合計得点】と【順位】を同時に表示 */
         let totalRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">合計得点</td>` + teamOrder.map(n => {
           const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
           const isWinner = finalScore === maxScore && maxScore > 0;
-          return `<td class="score"><span class="anim-target" data-anim-step="2">${renderScoreCell(finalScore, "", isWinner, false)}</span></td>`;
+          return `<td class="score"><span class="anim-target" data-anim-step="4">${renderScoreCell(finalScore, "", isWinner, false)}</span></td>`;
         }).join('') + `</tr>`;
 
         let rankRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#111;">順位</td>` + teamOrder.map(n => {
           const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
           const rank = rankMap.get(finalScore);
-          return `<td class="${rank <= 3 ? 'rank-' + rank : ''}"><span class="anim-target" data-anim-step="2">${rank}位</span></td>`;
+          return `<td class="${rank <= 3 ? 'rank-' + rank : ''}"><span class="anim-target" data-anim-step="4">${rank}位</span></td>`;
         }).join('') + `</tr>`;
 
         tableHTML = `<thead>${headerRow}</thead><tbody>${songRows}${summaryRows}${totalRow}${rankRow}</tbody>`;
@@ -477,7 +477,7 @@
           return rowData ? parseInt(rowData[key], 10).toLocaleString() : '-';
         };
 
-        /* 1回目のEnterで PERFECT ~ MISS の数値を表示 (step 1) */
+        /* 1回目のEnterで PERFECT ~ MISS の数値をすべて一括表示 (step 1) */
         let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => `<td class="p-perfect"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'p')}</span></td>`).join('') + `</tr>`;
         let gRow = `<tr><td class="row-header p-great">GREAT</td>` + teamOrder.map(n => `<td class="p-great"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'g')}</span></td>`).join('') + `</tr>`;
         let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + teamOrder.map(n => `<td class="p-good"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'gd')}</span></td>`).join('') + `</tr>`;
