@@ -131,6 +131,18 @@
     .p-miss { color: #cc0000; }
     .score { font-family: monospace; font-size: 1.25rem; color: #006699; font-weight: bold; }
     .sub-score { font-family: monospace; font-size: 1.05rem; color: #333333; }
+    
+    /* 1位得点の強調（誇張スタイル） */
+    .score-top {
+      font-size: 1.5rem !important;
+      color: #d4a000 !important;
+      font-weight: 900 !important;
+      text-shadow: 0 0 8px rgba(212, 160, 0, 0.4);
+      transform: scale(1.05);
+      display: inline-block;
+    }
+
+    /* 順位スタイル */
     .rank-1 { color: #d4a000; font-size: 1.3rem; font-weight: bold; }
     .rank-2 { color: #777777; font-size: 1.2rem; font-weight: bold; }
     .rank-3 { color: #b85c00; font-size: 1.1rem; font-weight: bold; }
@@ -184,7 +196,7 @@
     }
     .btn-back:hover { background: #f0f0f0; color: #111; }
 
-    /* アニメーション定義（Enterキー入力待機用） */
+    /* アニメーション定義 */
     @keyframes dropIn {
       0% { opacity: 0; transform: translateY(-8px) scale(0.95); }
       100% { opacity: 1; transform: translateY(0) scale(1); }
@@ -339,17 +351,33 @@
       return `第${matchNum}試合`;
     }
 
-    function renderScoreCell(score, flg) {
+    // スコアセル生成（showFlgがfalseの場合はAP/FC非表示）
+    function renderScoreCell(score, flg, isTop = false, showFlg = true) {
       const formattedScore = score.toLocaleString();
       let badgeHTML = '';
 
-      if (flg === "AP" || flg === "ALL PERFECT") {
-        badgeHTML = `<span class="badge-ap">ALL PERFECT</span>`;
-      } else if (flg === "FC" || flg === "FULL COMBO") {
-        badgeHTML = `<span class="badge-fc">FULL COMBO</span>`;
+      if (showFlg) {
+        if (flg === "AP" || flg === "ALL PERFECT") {
+          badgeHTML = `<span class="badge-ap">ALL PERFECT</span>`;
+        } else if (flg === "FC" || flg === "FULL COMBO") {
+          badgeHTML = `<span class="badge-fc">FULL COMBO</span>`;
+        }
       }
 
-      return `<div class="score-box">${badgeHTML}<span>${formattedScore}</span></div>`;
+      const topClass = isTop ? 'score-top' : '';
+      return `<div class="score-box ${topClass}">${badgeHTML}<span>${formattedScore}</span></div>`;
+    }
+
+    // 同率対応の順位計算ロジック
+    function calculateRanks(scores) {
+      const sorted = [...scores].sort((a, b) => b - a);
+      const rankMap = new Map();
+      sorted.forEach((score, index) => {
+        if (!rankMap.has(score)) {
+          rankMap.set(score, index + 1);
+        }
+      });
+      return rankMap;
     }
 
     function renderBreadcrumb() {
@@ -476,7 +504,7 @@
         return;
       }
 
-      // 4. 曲目・最終結果 選択
+      // 4. 曲目・最終結果 選択（4つのカードのみ）
       if (currentSongTab === null) {
         const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
         const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
@@ -493,10 +521,7 @@
           return;
         }
 
-        let songNums = Array.from(new Set(matchRows.map(r => r.songNum).filter(Boolean))).sort((a,b) => a - b);
-        if (songNums.length === 0) songNums = ["1", "2", "3"];
-
-        let songCardsHTML = songNums.map(num => `
+        let songCardsHTML = ["1", "2", "3"].map(num => `
           <div class="selection-card" onclick="selectSongTab('${num}')">
             ${num}曲目
             <div class="sub">${num}曲目のスコア結果</div>
@@ -529,6 +554,7 @@
     function selectSongTab(tab) { currentSongTab = tab; render(); }
 
     function renderResultView(view) {
+      // 選択中の試合に参加している全データ行
       const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
       const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
 
@@ -538,20 +564,21 @@
       const teamOrder = [];
       const teamScores = {};
 
+      // この「試合」に参加している選手（チーム）だけを順序を維持して抽出・集計
       matchRows.forEach(r => {
+        let entityName = r.name;
+        if (isDoubles && r.name.includes("(")) {
+          entityName = r.name.split("(")[0].trim();
+        }
+
+        if (!teamScores[entityName]) {
+          teamOrder.push(entityName);
+          teamScores[entityName] = { total: 0, songs: {}, flgs: {}, p: 0, g: 0, gd: 0, b: 0, m: 0 };
+        }
+
         if (r.songNum) {
           if (r.songName) songMap[r.songNum] = r.songName;
 
-          let entityName = r.name;
-          if (isDoubles && r.name.includes("(")) {
-            entityName = r.name.split("(")[0].trim();
-          }
-
-          if (!teamScores[entityName]) {
-            teamOrder.push(entityName);
-            teamScores[entityName] = { total: 0, songs: {}, flgs: {}, p: 0, g: 0, gd: 0, b: 0, m: 0 };
-          }
-          
           teamScores[entityName].songs[r.songNum] = (teamScores[entityName].songs[r.songNum] || 0) + r.score;
           teamScores[entityName].flgs[r.songNum] = r.flg;
           teamScores[entityName].total += r.score;
@@ -564,9 +591,7 @@
         }
       });
 
-      let csvSongNums = Object.keys(songMap);
-      if (csvSongNums.length === 0) csvSongNums = ["1", "2", "3"];
-      const songNums = Array.from(new Set([...csvSongNums])).sort((a,b) => a - b);
+      const songNums = ["1", "2", "3"];
 
       let tabsHTML = songNums.map(num => `
         <button class="tab-btn ${currentSongTab === num ? 'active' : ''}" onclick="selectSongTab('${num}')">
@@ -583,52 +608,44 @@
       let tableHTML = "";
 
       if (currentSongTab === 'final') {
-        // 🏆 最終結果画面 (転置レイアウト)
-        const sortedList = [...teamOrder].sort((a, b) => teamScores[b].total - teamScores[a].total);
-        const rankMap = {};
-        sortedList.forEach((name, idx) => { rankMap[name] = idx + 1; });
+        // 🏆 最終結果画面（該当試合の全選手）
+        const allTotals = teamOrder.map(n => teamScores[n].total);
+        const rankMap = calculateRanks(allTotals);
 
-        // ヘッダー行: 1列目は項目名、2列目以降にプレイヤー名
         let headerRow = `<tr><th class="row-header">${isDoubles ? 'チーム' : '項目 / プレイヤー'}</th>`;
         teamOrder.forEach(name => {
           headerRow += `<th class="player-header anim-item anim-base">${name}</th>`;
         });
         headerRow += `</tr>`;
 
-        // 判定行
-        let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => `<td class="p-perfect anim-item anim-p">${teamScores[n].p.toLocaleString()}</td>`).join('') + `</tr>`;
-        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + teamOrder.map(n => `<td class="p-great anim-item anim-g">${teamScores[n].g.toLocaleString()}</td>`).join('') + `</tr>`;
-        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + teamOrder.map(n => `<td class="p-good anim-item anim-gd">${teamScores[n].gd.toLocaleString()}</td>`).join('') + `</tr>`;
-        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + teamOrder.map(n => `<td class="p-bad anim-item anim-b">${teamScores[n].b.toLocaleString()}</td>`).join('') + `</tr>`;
-        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + teamOrder.map(n => `<td class="p-miss anim-item anim-m">${teamScores[n].m.toLocaleString()}</td>`).join('') + `</tr>`;
-
-        // 各曲の得点行
+        // 1〜3曲目の得点（AP/FCあり）
         let songRows = songNums.map(num => {
           const sName = songMap[num] ? `<br><small>${songMap[num]}</small>` : '';
           let row = `<tr><td class="row-header">${num}曲目${sName}</td>`;
           teamOrder.forEach(n => {
             const sScore = teamScores[n].songs[num] !== undefined ? teamScores[n].songs[num] : 0;
             const sFlg = teamScores[n].flgs[num] || "";
-            const cellContent = teamScores[n].songs[num] !== undefined ? renderScoreCell(sScore, sFlg) : '-';
+            const cellContent = teamScores[n].songs[num] !== undefined ? renderScoreCell(sScore, sFlg, false, true) : '-';
             row += `<td class="sub-score anim-item anim-song">${cellContent}</td>`;
           });
           row += `</tr>`;
           return row;
         }).join('');
 
-        // 合計得点行
-        let totalRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#006699;">合計得点</td>` + teamOrder.map(n => `<td class="score anim-item anim-score">${renderScoreCell(teamScores[n].total, "")}</td>`).join('') + `</tr>`;
+        // 合計得点行（AP/FC表示なし）
+        let totalRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#006699;">合計得点</td>` + teamOrder.map(n => {
+          return `<td class="score anim-item anim-score">${renderScoreCell(teamScores[n].total, "", false, false)}</td>`;
+        }).join('') + `</tr>`;
 
-        // 順位行
+        // 順位行（同率順位対応）
         let rankRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#111;">順位</td>` + teamOrder.map(n => {
-          const rank = rankMap[n];
+          const rank = rankMap.get(teamScores[n].total);
           return `<td class="${rank <= 3 ? 'rank-' + rank : ''} anim-item anim-rank">${rank}位</td>`;
         }).join('') + `</tr>`;
 
         tableHTML = `
           <thead>${headerRow}</thead>
           <tbody>
-            ${pRow}${gRow}${gdRow}${bRow}${mRow}
             ${songRows}
             ${totalRow}
             ${rankRow}
@@ -636,32 +653,61 @@
         `;
 
       } else {
-        // 🎵 個別曲目（1〜3曲目）画面 (転置レイアウト)
+        // 🎵 個別曲目（1〜3曲目）画面（該当試合の参加選手全員分）
         const targetSongRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
 
-        const sortedList = [...targetSongRows].sort((a, b) => b.score - a.score);
-        const rankMap = new Map();
-        sortedList.forEach((r, idx) => { rankMap.set(r, idx + 1); });
+        // 最高得点の算出（1位の強調・誇張のため）
+        const scores = targetSongRows.map(r => r.score);
+        const maxScore = scores.length > 0 ? Math.max(...scores) : -1;
 
-        // ヘッダー行
-        let headerRow = `<tr><th class="row-header">${isDoubles ? 'チーム' : '項目 / プレイヤー'}</th>`;
+        // この試合に参加している全チーム／選手を軸に整形
+        const playerSongMap = {};
         targetSongRows.forEach(p => {
-          headerRow += `<th class="player-header anim-item anim-base">${p.name}</th>`;
+          let entityName = p.name;
+          if (isDoubles && p.name.includes("(")) {
+            entityName = p.name.split("(")[0].trim();
+          }
+          playerSongMap[entityName] = p;
+        });
+
+        let headerRow = `<tr><th class="row-header">${isDoubles ? 'チーム' : '項目 / プレイヤー'}</th>`;
+        teamOrder.forEach(name => {
+          headerRow += `<th class="player-header anim-item anim-base">${name}</th>`;
         });
         headerRow += `</tr>`;
 
-        // 判定・スコア各行
-        let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + targetSongRows.map(p => `<td class="p-perfect anim-item anim-p">${parseInt(p.p, 10).toLocaleString()}</td>`).join('') + `</tr>`;
-        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + targetSongRows.map(p => `<td class="p-great anim-item anim-g">${parseInt(p.g, 10).toLocaleString()}</td>`).join('') + `</tr>`;
-        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + targetSongRows.map(p => `<td class="p-good anim-item anim-gd">${parseInt(p.gd, 10).toLocaleString()}</td>`).join('') + `</tr>`;
-        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + targetSongRows.map(p => `<td class="p-bad anim-item anim-b">${parseInt(p.b, 10).toLocaleString()}</td>`).join('') + `</tr>`;
-        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + targetSongRows.map(p => `<td class="p-miss anim-item anim-m">${parseInt(p.m, 10).toLocaleString()}</td>`).join('') + `</tr>`;
+        // 各行の構築
+        let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => {
+          const pData = playerSongMap[n];
+          return `<td class="p-perfect anim-item anim-p">${pData ? parseInt(pData.p, 10).toLocaleString() : '-'}</td>`;
+        }).join('') + `</tr>`;
 
-        let scoreRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#006699;">得点</td>` + targetSongRows.map(p => `<td class="score anim-item anim-score">${renderScoreCell(p.score, p.flg)}</td>`).join('') + `</tr>`;
+        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + teamOrder.map(n => {
+          const pData = playerSongMap[n];
+          return `<td class="p-great anim-item anim-g">${pData ? parseInt(pData.g, 10).toLocaleString() : '-'}</td>`;
+        }).join('') + `</tr>`;
 
-        let rankRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#111;">順位</td>` + targetSongRows.map(p => {
-          const rank = rankMap.get(p);
-          return `<td class="${rank <= 3 ? 'rank-' + rank : ''} anim-item anim-rank">${rank}位</td>`;
+        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + teamOrder.map(n => {
+          const pData = playerSongMap[n];
+          return `<td class="p-good anim-item anim-gd">${pData ? parseInt(pData.gd, 10).toLocaleString() : '-'}</td>`;
+        }).join('') + `</tr>`;
+
+        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + teamOrder.map(n => {
+          const pData = playerSongMap[n];
+          return `<td class="p-bad anim-item anim-b">${pData ? parseInt(pData.b, 10).toLocaleString() : '-'}</td>`;
+        }).join('') + `</tr>`;
+
+        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + teamOrder.map(n => {
+          const pData = playerSongMap[n];
+          return `<td class="p-miss anim-item anim-m">${pData ? parseInt(pData.m, 10).toLocaleString() : '-'}</td>`;
+        }).join('') + `</tr>`;
+
+        // 得点行（1位の得点は誇張表示）
+        let scoreRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#006699;">得点</td>` + teamOrder.map(n => {
+          const pData = playerSongMap[n];
+          if (!pData) return `<td class="score anim-item anim-score">-</td>`;
+          const isTop = (pData.score === maxScore && maxScore > 0);
+          return `<td class="score anim-item anim-score">${renderScoreCell(pData.score, pData.flg, isTop, true)}</td>`;
         }).join('') + `</tr>`;
 
         tableHTML = `
@@ -669,7 +715,6 @@
           <tbody>
             ${pRow}${gRow}${gdRow}${bRow}${mRow}
             ${scoreRow}
-            ${rankRow}
           </tbody>
         `;
       }
