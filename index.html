@@ -372,7 +372,6 @@
         if (r.songNum) {
           if (r.songName) songMap[r.songNum] = r.songName;
 
-          // チーム曲合計
           if (!teamData[teamName].songDetails[r.songNum]) {
             teamData[teamName].songDetails[r.songNum] = { p: 0, g: 0, gd: 0, b: 0, m: 0, score: 0, flg: r.flg };
           }
@@ -416,7 +415,7 @@
         const maxScore = Math.max(...allTotals);
         const rankMap = calculateRanks(allTotals);
 
-        // 最終結果：2チーム（2列）
+        // 最終結果：2チーム（2列：青・橙）
         let headerRow = `<tr><th class="row-header"></th>` +
           teamOrder.map((name, idx) => {
             const colorClass = isDoubles ? ((idx === 0) ? 'team-blue' : 'team-orange') : '';
@@ -465,8 +464,8 @@
 
         let columns = [];
 
-        // DOUBLESの3曲目のみ個人戦（4列）、1,2曲目はチーム単位（2列）
         if (isDoubles && currentSongTab === "3") {
+          // 3曲目のみ各チーム2名（計4列：青・青・橙・橙）
           teamOrder.forEach((tName, teamIdx) => {
             const members = Object.keys(teamData[tName].members);
             if (members.length > 0) {
@@ -482,15 +481,29 @@
             }
           });
         } else if (isDoubles) {
+          // 1,2曲目はチーム代表の各1名（計2列：青・橙）
           teamOrder.forEach((tName, teamIdx) => {
+            const members = Object.keys(teamData[tName].members);
+            let pNameFound = "";
+            members.forEach(mName => {
+              if (teamData[tName].members[mName]?.[currentSongTab]) {
+                pNameFound = mName;
+              }
+            });
+
             const songDet = teamData[tName].songDetails[currentSongTab];
+            const headerLabel = pNameFound 
+              ? `${tName}<br><small style="font-size:0.95rem; font-weight:normal;">(${pNameFound})</small>`
+              : tName;
+
             columns.push({
-              header: tName,
+              header: headerLabel,
               teamIdx: teamIdx,
               data: songDet || null
             });
           });
         } else {
+          // シングルス部門
           const targetSongRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
           teamOrder.forEach((tName, teamIdx) => {
             const rowData = targetSongRows.find(r => r.name.includes(tName));
@@ -501,7 +514,7 @@
         const validScores = columns.map(c => c.data ? c.data.score : -1);
         const maxScore = validScores.length > 0 ? Math.max(...validScores) : -1;
 
-        // ヘッダーの色分け指定
+        // ヘッダーの色分け設定
         let headerRow = `<tr><th class="row-header"></th>` +
           columns.map((col, idx) => {
             let colorClass = '';
