@@ -291,6 +291,7 @@
 
       const header = rows[0];
 
+      // ★列インデックスの自動判定（A列への部門追加・列ずらしに柔軟に対応）
       const idxDept = header.findIndex(h => h.includes('部門'));
       const idxRound = header.findIndex(h => h.includes('ラウンド'));
       const idxMatch = header.findIndex(h => h.includes('試合'));
@@ -303,16 +304,14 @@
       const idxB = header.findIndex(h => h.toUpperCase().includes('BAD'));
       const idxM = header.findIndex(h => h.toUpperCase().includes('MISS'));
       const idxScore = header.findIndex(h => h.includes('得点') || h.includes('スコア'));
-      
-      let idxFlg = header.findIndex(h => h.toUpperCase().includes('AP') || h.toUpperCase().includes('FC') || h.includes('FLG') || h.includes('フラグ'));
-      if (idxFlg === -1) idxFlg = 11;
+      const idxFlg = header.findIndex(h => h.toUpperCase().includes('AP') || h.toUpperCase().includes('FC') || h.includes('FLG') || h.includes('フラグ'));
 
       treeData = {};
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         
-        const dept = idxDept !== -1 && row[idxDept] ? row[idxDept] : "共通";
+        const dept = (idxDept !== -1 && row[idxDept]) ? row[idxDept].toUpperCase().trim() : "共通";
         const rawRound = idxRound !== -1 ? row[idxRound] : "";
         const match = idxMatch !== -1 ? row[idxMatch] : "";
         const songNum = idxSongNum !== -1 ? row[idxSongNum] : "";
@@ -329,7 +328,7 @@
         const m = idxM !== -1 ? row[idxM] : "0";
         const scoreStr = idxScore !== -1 ? row[idxScore] : "0";
         const score = parseInt(scoreStr, 10) || 0;
-        const flg = row[idxFlg] ? row[idxFlg].toUpperCase().trim() : "";
+        const flg = (idxFlg !== -1 && row[idxFlg]) ? row[idxFlg].toUpperCase().trim() : "";
 
         const targetDepts = (dept === "共通") ? ["STANDARD", "NEXT", "ULTIMATE", "DOUBLES"] : [dept];
 
@@ -504,7 +503,7 @@
         return;
       }
 
-      // 4. 曲目・最終結果 選択（4つのカードのみ）
+      // 4. 曲目・最終結果 選択（4つのカード）
       if (currentSongTab === null) {
         const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
         const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
@@ -554,7 +553,6 @@
     function selectSongTab(tab) { currentSongTab = tab; render(); }
 
     function renderResultView(view) {
-      // 選択中の試合に参加している全データ行
       const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
       const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
 
@@ -564,7 +562,6 @@
       const teamOrder = [];
       const teamScores = {};
 
-      // この「試合」に参加している選手（チーム）だけを順序を維持して抽出・集計
       matchRows.forEach(r => {
         let entityName = r.name;
         if (isDoubles && r.name.includes("(")) {
@@ -608,7 +605,7 @@
       let tableHTML = "";
 
       if (currentSongTab === 'final') {
-        // 🏆 最終結果画面（該当試合の全選手）
+        // 🏆 最終結果画面
         const allTotals = teamOrder.map(n => teamScores[n].total);
         const rankMap = calculateRanks(allTotals);
 
@@ -653,14 +650,13 @@
         `;
 
       } else {
-        // 🎵 個別曲目（1〜3曲目）画面（該当試合の参加選手全員分）
+        // 🎵 個別曲目（1〜3曲目）画面
         const targetSongRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
 
         // 最高得点の算出（1位の強調・誇張のため）
         const scores = targetSongRows.map(r => r.score);
         const maxScore = scores.length > 0 ? Math.max(...scores) : -1;
 
-        // この試合に参加している全チーム／選手を軸に整形
         const playerSongMap = {};
         targetSongRows.forEach(p => {
           let entityName = p.name;
@@ -676,7 +672,6 @@
         });
         headerRow += `</tr>`;
 
-        // 各行の構築
         let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => {
           const pData = playerSongMap[n];
           return `<td class="p-perfect anim-item anim-p">${pData ? parseInt(pData.p, 10).toLocaleString() : '-'}</td>`;
@@ -702,7 +697,6 @@
           return `<td class="p-miss anim-item anim-m">${pData ? parseInt(pData.m, 10).toLocaleString() : '-'}</td>`;
         }).join('') + `</tr>`;
 
-        // 得点行（1位の得点は誇張表示）
         let scoreRow = `<tr><td class="row-header" style="font-size:1.1rem; color:#006699;">得点</td>` + teamOrder.map(n => {
           const pData = playerSongMap[n];
           if (!pData) return `<td class="score anim-item anim-score">-</td>`;
