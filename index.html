@@ -2,48 +2,55 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>大会リザルトシステム</title>
+  <title>大会リザルトシステム (OBS 1080p対応)</title>
   <style>
-    body {
+    * { box-sizing: border-box; }
+    
+    html, body {
+      width: 1920px;
+      height: 1080px;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* スクロールバーを完全に消去 */
       font-family: 'Helvetica Neue', Arial, sans-serif;
       background: #f4f6f9;
       color: #333333;
-      margin: 0; padding: 40px 20px;
-      display: flex; flex-direction: column; align-items: center;
-      min-height: 100vh;
-      box-sizing: border-box;
     }
 
-    /* 全体コンテナ */
+    /* 全体コンテナ（1080p内で上下左右中央配置） */
     .container {
-      width: 100%; max-width: 1100px;
-      margin-top: 10px; text-align: center;
-      flex: 1; display: flex; flex-direction: column; align-items: center;
+      width: 1920px;
+      height: 1080px;
+      padding: 30px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
     }
 
     /* パンくずリスト */
     .breadcrumb {
-      display: flex; justify-content: center; align-items: center; gap: 8px;
-      margin-bottom: 25px; font-size: 1rem; color: #666666; flex-wrap: wrap;
+      display: flex; justify-content: center; align-items: center; gap: 10px;
+      margin-bottom: 15px; font-size: 1.1rem; color: #666666;
     }
     .breadcrumb-item { cursor: pointer; text-decoration: underline; color: #0066cc; }
     .breadcrumb-item:hover { color: #003399; }
     .breadcrumb-current { color: #111111; font-weight: bold; }
 
     /* タイトルエリア */
-    h1 { color: #111111; font-size: 2rem; margin-bottom: 12px; }
-    p.subtitle { color: #666666; font-size: 1.05rem; margin-top: 0; margin-bottom: 30px; }
+    h1 { color: #111111; font-size: 2.2rem; margin: 0 0 10px 0; }
+    p.subtitle { color: #666666; font-size: 1.1rem; margin: 0 0 20px 0; }
 
     /* カード・ボタン */
     .card-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 24px; margin-top: 20px; width: 100%;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 24px; margin-top: 20px; width: 100%; max-width: 1400px;
     }
     .selection-card {
       background: #ffffff;
       border: 1px solid #d0d7de;
       border-radius: 12px; padding: 35px 20px;
-      font-size: 1.3rem; font-weight: bold; color: #111111;
+      font-size: 1.4rem; font-weight: bold; color: #111111;
       cursor: pointer; transition: all 0.2s ease;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.04);
@@ -54,69 +61,69 @@
     }
     .selection-card.gold-card { border-color: #e6b800; background: #fffdf0; }
     .selection-card.gold-card:hover { background: #fff9d6; border-color: #d4a000; box-shadow: 0 8px 20px rgba(212, 160, 0, 0.2); }
-    .selection-card .sub { font-size: 0.9rem; color: #666666; font-weight: normal; margin-top: 8px; }
+    .selection-card .sub { font-size: 0.95rem; color: #666666; font-weight: normal; margin-top: 8px; }
 
     /* タブ切り替え */
-    .tab-container { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab-container { display: flex; justify-content: center; gap: 12px; margin-bottom: 15px; }
     .tab-btn {
       background: #ffffff; border: 1px solid #cccccc; color: #333333;
-      padding: 10px 22px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.2s;
+      padding: 10px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; transition: all 0.2s;
     }
     .tab-btn:hover { background: #e8f2ff; }
     .tab-btn.active { background: #0066cc; color: #ffffff; font-weight: bold; border-color: #0066cc; box-shadow: 0 3px 10px rgba(0, 102, 204, 0.3); }
 
     /* 強調表示する曲名 */
     .song-title-banner {
-      font-size: 1.6rem; font-weight: bold; color: #111111;
-      margin-bottom: 25px; letter-spacing: 0.5px;
+      font-size: 1.8rem; font-weight: bold; color: #111111;
+      margin-bottom: 15px; letter-spacing: 0.5px;
     }
 
-    /* リザルトテーブル */
+    /* リザルトテーブル（1080pに収まるようにpaddingとサイズを自動最適化） */
     .table-container {
       background: #ffffff; border-radius: 14px; border: 1px solid #e1e4e8;
-      overflow-x: auto; margin-top: 10px; width: 100%; box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+      overflow: hidden; width: 100%; max-width: 1600px; box-shadow: 0 6px 20px rgba(0,0,0,0.06);
     }
-    table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
-    th, td { padding: 18px 20px; font-size: 1.1rem; border-bottom: 1px solid #e1e4e8; border-right: 1px solid #f0f0f0; }
+    table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; table-layout: fixed; }
+    th, td { padding: 12px 10px; font-size: 1.15rem; border-bottom: 1px solid #e1e4e8; border-right: 1px solid #f0f0f0; }
     th:last-child, td:last-child { border-right: none; }
     
-    .row-header { background: #f8fafc; font-weight: bold; color: #004499; text-align: right; width: 180px; font-size: 1.1rem; }
-    .player-header { background: #e8f2ff; color: #004499; font-size: 1.25rem; font-weight: bold; }
+    .row-header { background: #f8fafc; font-weight: bold; color: #004499; text-align: right; width: 220px; font-size: 1.15rem; }
+    .player-header { background: #e8f2ff; color: #004499; font-size: 1.3rem; font-weight: bold; }
 
     /* ダブルスチーム用カラー分岐 */
     .team-col-0 { background: #f0f7ff !important; color: #0055bb !important; border-bottom: 2px solid #0066cc !important; }
     .team-col-1 { background: #fff5f0 !important; color: #cc4400 !important; border-bottom: 2px solid #ff6600 !important; }
 
-    /* PERFECT */
+    /* PERFECT等 */
     .p-perfect {
       background: linear-gradient(90deg, #00d2ff 0%, #ff66c4 100%);
       color: transparent;
       -webkit-background-clip: text;
       background-clip: text;
       font-weight: 900;
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.15));
     }
-    .p-great { color: #ff85c0; font-weight: bold; font-size: 1.15rem; }
-    .p-good { color: #00aaff; font-weight: bold; font-size: 1.15rem; }
-    .p-bad { color: #66cc00; font-weight: bold; font-size: 1.15rem; }
-    .p-miss { color: #888888; font-weight: bold; font-size: 1.15rem; }
+    .p-great { color: #ff85c0; font-weight: bold; font-size: 1.2rem; }
+    .p-good { color: #00aaff; font-weight: bold; font-size: 1.2rem; }
+    .p-bad { color: #66cc00; font-weight: bold; font-size: 1.2rem; }
+    .p-miss { color: #888888; font-weight: bold; font-size: 1.2rem; }
 
-    .score { font-family: monospace; font-size: 1.4rem; color: #006699; font-weight: bold; }
-    .sub-score { font-family: monospace; font-size: 1.2rem; color: #333333; }
+    .score { font-family: monospace; font-size: 1.5rem; color: #006699; font-weight: bold; }
+    .sub-score { font-family: monospace; font-size: 1.25rem; color: #333333; }
     
     .score-top {
       font-size: 1.8rem !important; color: #d4a000 !important; font-weight: 900 !important;
       text-shadow: 0 0 10px rgba(212, 160, 0, 0.5); transform: scale(1.08); display: inline-block;
     }
 
-    .rank-1 { color: #d4a000; font-size: 1.45rem; font-weight: bold; }
-    .rank-2 { color: #777777; font-size: 1.3rem; font-weight: bold; }
-    .rank-3 { color: #b85c00; font-size: 1.2rem; font-weight: bold; }
+    .rank-1 { color: #d4a000; font-size: 1.5rem; font-weight: bold; }
+    .rank-2 { color: #777777; font-size: 1.35rem; font-weight: bold; }
+    .rank-3 { color: #b85c00; font-size: 1.25rem; font-weight: bold; }
 
-    .score-box { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; padding-top: 6px; }
+    .score-box { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; }
     .badge-ap, .badge-fc {
-      position: absolute; top: -8px; left: -28px;
+      position: absolute; top: -12px; left: -28px;
       font-size: 0.75rem; font-weight: 900;
       transform: rotate(-12deg); pointer-events: none;
       white-space: nowrap;
@@ -132,22 +139,22 @@
 
     .p1-tag { color: #0066cc; font-weight: bold; }
     .p2-tag { color: #cc0066; font-weight: bold; }
-    .pair-container { display: flex; justify-content: center; gap: 14px; font-size: 1.05rem; }
+    .pair-container { display: flex; justify-content: center; gap: 14px; font-size: 1.1rem; }
 
-    .btn-back { margin-top: 35px; margin-bottom: 20px; background: #ffffff; border: 1px solid #cccccc; color: #555555; padding: 10px 24px; font-size: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .btn-back { margin-top: 20px; background: #ffffff; border: 1px solid #cccccc; color: #555555; padding: 8px 20px; font-size: 0.95rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
     .btn-back:hover { background: #f0f0f0; color: #111; }
 
-    /* アニメーション演出（初期隠し → Enterで出現） */
+    /* アニメーション演出（初期状態：透明＆非表示） */
     @keyframes dropIn { 0% { opacity: 0; transform: translateY(-6px); } 100% { opacity: 1; transform: translateY(0); } }
-    .anim-target { opacity: 0; display: inline-block; }
-    .anim-visible { animation: dropIn 0.3s ease forwards; }
+    .anim-target { opacity: 0; display: inline-block; visibility: hidden; }
+    .anim-visible { animation: dropIn 0.3s ease forwards; visibility: visible; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div class="breadcrumb" id="breadcrumb"></div>
-    <div id="view-area" style="width: 100%;"></div>
+    <div id="view-area" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
   </div>
 
   <script>
@@ -284,6 +291,7 @@
     }
 
     function navTo(level) {
+      animStep = 0;
       if (level === 'dept') { currentDept = currentRound = currentMatch = currentSongTab = null; }
       else if (level === 'round') { currentRound = currentMatch = currentSongTab = null; }
       else if (level === 'match') { currentMatch = currentSongTab = null; }
@@ -322,8 +330,8 @@
         const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
         if (matchRows.length === 0) {
           view.innerHTML = `<h1>${currentDept}部門 - ${currentRound} ${getMatchDisplayName(currentDept, currentRound, currentMatch)}</h1>
-            <div style="padding: 50px 20px; background: #ffffff; border-radius: 12px; border: 1px dashed #cccccc; margin-top: 20px;">
-              <p style="font-size: 1.3rem; color: #666666; margin-bottom: 10px; font-weight: bold;">データがありません</p>
+            <div style="padding: 50px 20px; background: #ffffff; border-radius: 12px; border: 1px dashed #cccccc; margin-top: 20px; width:100%; max-width:800px; text-align:center;">
+              <p style="font-size: 1.3rem; color: #666666; margin: 0; font-weight: bold;">データがありません</p>
             </div><button class="btn-back" onclick="navTo('match')">← 試合選択に戻る</button>`;
           return;
         }
@@ -339,12 +347,13 @@
       renderResultView(view);
     }
 
-    function selectDept(d) { currentDept = d; render(); }
-    function selectRound(r) { currentRound = r; render(); }
-    function selectMatch(m) { currentMatch = m; currentSongTab = null; render(); }
+    function selectDept(d) { currentDept = d; animStep = 0; render(); }
+    function selectRound(r) { currentRound = r; animStep = 0; render(); }
+    function selectMatch(m) { currentMatch = m; currentSongTab = null; animStep = 0; render(); }
     function selectSongTab(tab) { currentSongTab = tab; animStep = 0; render(); }
 
     function renderResultView(view) {
+      animStep = 0; // スイッチ切り替え時に必ずステップリセット
       const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
       const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
       const isDoubles = currentDept.toUpperCase().includes("DOUBLES");
@@ -416,7 +425,6 @@
         let headerRow = `<tr><th class="row-header"></th>` +
           teamOrder.map((name, idx) => `<th class="player-header ${isDoubles ? 'team-col-' + (idx % 2) : ''}">${name}</th>`).join('') + `</tr>`;
 
-        /* 最終結果: 1曲ごとに Enter 1~3回で順次表示 */
         let songRows = songNums.map((num, idx) => {
           const sName = songMap[num] ? `<br><small style="font-weight:normal; color:#555;">（${songMap[num]}）</small>` : '';
           let row = `<tr><td class="row-header">${num}曲目${sName}</td>`;
@@ -439,7 +447,6 @@
           summaryRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + teamOrder.map(n => `<td class="p-miss"><span class="anim-target" data-anim-step="4">${getVal(n, 'm')}</span></td>`).join('') + `</tr>`;
         }
 
-        /* 4回目のEnterで【合計得点】と【順位】を同時に表示 */
         let totalRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">合計得点</td>` + teamOrder.map(n => {
           const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
           const isWinner = finalScore === maxScore && maxScore > 0;
@@ -477,14 +484,12 @@
           return rowData ? parseInt(rowData[key], 10).toLocaleString() : '-';
         };
 
-        /* 1回目のEnterで PERFECT ~ MISS の数値をすべて一括表示 (step 1) */
         let pRow = `<tr><td class="row-header p-perfect">PERFECT</td>` + teamOrder.map(n => `<td class="p-perfect"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'p')}</span></td>`).join('') + `</tr>`;
         let gRow = `<tr><td class="row-header p-great">GREAT</td>` + teamOrder.map(n => `<td class="p-great"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'g')}</span></td>`).join('') + `</tr>`;
         let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + teamOrder.map(n => `<td class="p-good"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'gd')}</span></td>`).join('') + `</tr>`;
         let bRow = `<tr><td class="row-header p-bad">BAD</td>` + teamOrder.map(n => `<td class="p-bad"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'b')}</span></td>`).join('') + `</tr>`;
         let mRow = `<tr><td class="row-header p-miss">MISS</td>` + teamOrder.map(n => `<td class="p-miss"><span class="anim-target" data-anim-step="1">${getValHTML(n, 'm')}</span></td>`).join('') + `</tr>`;
 
-        /* 2回目のEnterで 得点（スコア・バッジ）を表示 (step 2) */
         let scoreRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">得点</td>` + teamOrder.map(n => {
           const rowData = targetSongRows.find(r => r.name.includes(n));
           if (!rowData) return `<td class="score">-</td>`;
