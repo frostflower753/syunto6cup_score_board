@@ -2,13 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>大会リザルトシステム (OBS 1080p対応)</title>
+  <title>大会リザルトシステム</title>
   <style>
     * { box-sizing: border-box; }
     
+    /* 1920x1080のOBSにピタリと収まり、プレビューでも見切れない設定 */
     html, body {
-      width: 1920px;
-      height: 1080px;
+      width: 100vw;
+      height: 100vh;
       margin: 0;
       padding: 0;
       overflow: hidden; /* スクロールバーを完全に消去 */
@@ -17,11 +18,13 @@
       color: #333333;
     }
 
-    /* 全体コンテナ（1080p内で上下左右中央配置） */
+    /* 全体コンテナ */
     .container {
-      width: 1920px;
-      height: 1080px;
-      padding: 30px 40px;
+      width: 100%;
+      height: 100%;
+      max-width: 1920px;
+      margin: 0 auto;
+      padding: 40px 50px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -31,25 +34,32 @@
     /* パンくずリスト */
     .breadcrumb {
       display: flex; justify-content: center; align-items: center; gap: 10px;
-      margin-bottom: 15px; font-size: 1.1rem; color: #666666;
+      margin-bottom: 20px; font-size: 1.1rem; color: #666666;
     }
     .breadcrumb-item { cursor: pointer; text-decoration: underline; color: #0066cc; }
     .breadcrumb-item:hover { color: #003399; }
     .breadcrumb-current { color: #111111; font-weight: bold; }
 
     /* タイトルエリア */
-    h1 { color: #111111; font-size: 2.2rem; margin: 0 0 10px 0; }
-    p.subtitle { color: #666666; font-size: 1.1rem; margin: 0 0 20px 0; }
+    h1 { color: #111111; font-size: 2.2rem; margin: 0 0 10px 0; text-align: center; }
+    p.subtitle { color: #666666; font-size: 1.1rem; margin: 0 0 30px 0; text-align: center; }
 
-    /* カード・ボタン */
+    /* カード・ボタン（見切れ防止のためFlexboxで中央揃え） */
     .card-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 24px; margin-top: 20px; width: 100%; max-width: 1400px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+      max-width: 1400px;
     }
     .selection-card {
+      width: 300px;
+      height: 140px;
       background: #ffffff;
       border: 1px solid #d0d7de;
-      border-radius: 12px; padding: 35px 20px;
+      border-radius: 12px;
       font-size: 1.4rem; font-weight: bold; color: #111111;
       cursor: pointer; transition: all 0.2s ease;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -75,10 +85,10 @@
     /* 強調表示する曲名 */
     .song-title-banner {
       font-size: 1.8rem; font-weight: bold; color: #111111;
-      margin-bottom: 15px; letter-spacing: 0.5px;
+      margin-bottom: 15px; letter-spacing: 0.5px; text-align: center;
     }
 
-    /* リザルトテーブル（1080pに収まるようにpaddingとサイズを自動最適化） */
+    /* リザルトテーブル */
     .table-container {
       background: #ffffff; border-radius: 14px; border: 1px solid #e1e4e8;
       overflow: hidden; width: 100%; max-width: 1600px; box-shadow: 0 6px 20px rgba(0,0,0,0.06);
@@ -141,7 +151,7 @@
     .p2-tag { color: #cc0066; font-weight: bold; }
     .pair-container { display: flex; justify-content: center; gap: 14px; font-size: 1.1rem; }
 
-    .btn-back { margin-top: 20px; background: #ffffff; border: 1px solid #cccccc; color: #555555; padding: 8px 20px; font-size: 0.95rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .btn-back { margin-top: 30px; background: #ffffff; border: 1px solid #cccccc; color: #555555; padding: 10px 30px; font-size: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
     .btn-back:hover { background: #f0f0f0; color: #111; }
 
     /* アニメーション演出（初期状態：透明＆非表示） */
@@ -353,7 +363,7 @@
     function selectSongTab(tab) { currentSongTab = tab; animStep = 0; render(); }
 
     function renderResultView(view) {
-      animStep = 0; // スイッチ切り替え時に必ずステップリセット
+      animStep = 0;
       const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
       const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
       const isDoubles = currentDept.toUpperCase().includes("DOUBLES");
