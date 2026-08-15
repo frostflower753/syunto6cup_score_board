@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>大会リザルトシステム</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #0e1017; color: #ffffff;
+      margin: 0; padding: 20px;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh;
+    }
+
+    /* CSV読み込みステータス */
+    .status-bar {
+      position: fixed; top: 10px; right: 10px;
+      padding: 6px 12px; border-radius: 20px;
+      font-size: 0.8rem; font-weight: bold;
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(0,0,0,0.6); border: 1px solid #444;
+    }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #888; }
+    .status-dot.ok { background: #00ff66; box-shadow: 0 0 8px #00ff66; }
+    .status-dot.ng { background: #ff3333; box-shadow: 0 0 8px #ff3333; }
+
+    /* 全体コンテナ */
+    .container {
+      width: 100%; max-width: 950px;
+      margin-top: 30px; text-align: center;
+    }
+
+    /* パンくずリスト（戻るナビゲーション） */
+    .breadcrumb {
+      display: flex; justify-content: center; align-items: center; gap: 10px;
+      margin-bottom: 20px; font-size: 0.95rem; color: #a0a5ba;
+    }
+    .breadcrumb-item { cursor: pointer; text-decoration: underline; color: #00d2ff; }
+    .breadcrumb-item:hover { color: #ffffff; }
+    .breadcrumb-current { color: #ffffff; font-weight: bold; }
+
+    /* タイトルエリア */
+    h1 { color: #ffffff; margin-bottom: 10px; }
+    p.subtitle { color: #a0a5ba; margin-top: 0; margin-bottom: 30px; }
+
+    /* ボタン・カード一覧（選択画面用） */
+    .card-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px; margin-top: 20px;
+    }
+    .selection-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(0, 210, 255, 0.3);
+      border-radius: 12px; padding: 25px 15px;
+      font-size: 1.2rem; font-weight: bold; color: #ffffff;
+      cursor: pointer; transition: all 0.2s ease;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .selection-card:hover {
+      background: rgba(0, 210, 255, 0.2);
+      border-color: #00d2ff;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 210, 255, 0.2);
+    }
+    .selection-card .sub { font-size: 0.85rem; color: #a0a5ba; font-weight: normal; margin-top: 5px; }
+
+    /* タブ切り替え（リザルト画面用） */
+    .tab-container {
+      display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ccc; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+    }
+    .tab-btn.active {
+      background: #00d2ff; color: #000; font-weight: bold; border-color: #00d2ff;
+    }
+
+    /* リザルトテーブル */
+    .table-container {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow-x: auto; margin-top: 10px;
+    }
+    table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; }
+    th, td { padding: 12px 10px; font-size: 0.9rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+    th { background: rgba(0, 210, 255, 0.2); color: #00d2ff; }
+    th small { font-weight: normal; color: #d0d5e5; display: block; font-size: 0.75rem; }
+
+    /* スコア関連色分け */
+    .p-perfect { color: #ffff00; font-weight: bold; }
+    .p-great { color: #00ff00; }
+    .p-good { color: #00ffff; }
+    .p-bad { color: #ff00ff; }
+    .p-miss { color: #ff3333; }
+    .score { font-family: monospace; font-size: 1.15rem; color: #00ffcc; font-weight: bold; }
+    .sub-score { font-family: monospace; font-size: 0.95rem; color: #e0e0e0; }
+    .rank-1 { color: #ffd700; font-size: 1.2rem; font-weight: bold; }
+    .rank-2 { color: #c0c0c0; font-size: 1.1rem; font-weight: bold; }
+    .rank-3 { color: #c4722b; font-size: 1.0rem; font-weight: bold; }
+
+    /* 戻るボタン */
+    .btn-back {
+      margin-top: 25px; background: transparent; border: 1px solid #a0a5ba;
+      color: #a0a5ba; padding: 8px 20px; border-radius: 6px; cursor: pointer;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- CSVステータス表示 -->
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">CSV読み込み確認中...</span>
+  </div>
+
+  <div class="container">
+    <!-- ナビゲーション（パンくず） -->
+    <div class="breadcrumb" id="breadcrumb"></div>
+
+    <!-- メインコンテンツ表示エリア -->
+    <div id="view-area"></div>
+  </div>
+
+  <script>
+    // 読み込むGoogleスプレッドシートのCSV URL
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pub?gid=1560276695&single=true&output=csv"; 
+
+    // アプリの状態保持
+    let treeData = {};
+    let currentDept = null;
+    let currentRound = null;
+    let currentMatch = null;
+    let currentSongTab = 'final';
+
+    fetchCSV();
+
+    async function fetchCSV() {
+      const dot = document.getElementById('status-dot');
+      const text = document.getElementById('status-text');
+
+      try {
+        const res = await fetch(`${CSV_URL}&t=${new Date().getTime()}`);
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        
+        const csvText = await res.text();
+        parseCSV(csvText);
+
+        dot.className = "status-dot ok";
+        text.innerText = "CSV読み込み完了";
+        render();
+      } catch (err) {
+        dot.className = "status-dot ng";
+        text.innerText = "CSV読み込み失敗";
+        
+        document.getElementById('view-area').innerHTML = `
+          <div style="color:#ff5555; padding: 40px; border: 1px dashed #ff5555; border-radius: 12px;">
+            <h3>⚠️ CSVファイルを読み込めませんでした</h3>
+            <p style="font-size:0.9rem; text-align:left; line-height:1.6;">
+              GoogleスプレッドシートのURL指定および共有（Webに公開）設定をご確認ください。
+            </p>
+          </div>
+        `;
+      }
+    }
+
+    function parseCSV(text) {
+      const rows = text.trim().split(/\r?\n/).map(r => r.split(','));
+      treeData = {};
+
+      for (let i = 1; i < rows.length; i++) {
+        const [dept, round, match, songNum, songName, name, p, g, gd, b, m, scoreStr] 
+          = rows[i].map(c => c ? c.replace(/"/g, '').trim() : '');
+
+        if (!dept || !round || !match || !name) continue;
+        const score = parseInt(scoreStr, 10) || 0;
+
+        if (!treeData[dept]) treeData[dept] = {};
+        if (!treeData[dept][round]) treeData[dept][round] = {};
+        if (!treeData[dept][round][match]) treeData[dept][round][match] = [];
+
+        treeData[dept][round][match].push({ songNum, songName, name, p, g, gd, b, m, score });
+      }
+    }
+
+    function renderBreadcrumb() {
+      const nav = document.getElementById('breadcrumb');
+      let html = `<span class="breadcrumb-item" onclick="navTo('dept')">TOP (部門選択)</span>`;
+
+      if (currentDept) {
+        html += ` ＞ `;
+        if (currentRound) {
+          html += `<span class="breadcrumb-item" onclick="navTo('round')">${currentDept}</span>`;
+        } else {
+          html += `<span class="breadcrumb-current">${currentDept}</span>`;
+        }
+      }
+
+      if (currentRound) {
+        html += ` ＞ `;
+        if (currentMatch) {
+          html += `<span class="breadcrumb-item" onclick="navTo('match')">${currentRound}</span>`;
+        } else {
+          html += `<span class="breadcrumb-current">${currentRound}</span>`;
+        }
+      }
+
+      if (currentMatch) {
+        html += ` ＞ <span class="breadcrumb-current">第${currentMatch}試合</span>`;
+      }
+
+      nav.innerHTML = html;
+    }
+
+    function navTo(level) {
+      if (level === 'dept') { currentDept = null; currentRound = null; currentMatch = null; }
+      else if (level === 'round') { currentRound = null; currentMatch = null; }
+      else if (level === 'match') { currentMatch = null; }
+      render();
+    }
+
+    function render() {
+      renderBreadcrumb();
+      const view = document.getElementById('view-area');
+
+      if (!currentDept) {
+        const depts = Object.keys(treeData);
+        let cardsHTML = depts.map(d => `
+          <div class="selection-card" onclick="selectDept('${d}')">
+            ${d} 部門
+            <div class="sub">クリックして決定</div>
+          </div>
+        `).join('');
+
+        view.innerHTML = `
+          <h1>部門を選択してください</h1>
+          <p class="subtitle">表示したい部門を選択して次へ進みます</p>
+          <div class="card-grid">${cardsHTML}</div>
+        `;
+        return;
+      }
+
+      if (!currentRound) {
+        const rounds = Object.keys(treeData[currentDept]);
+        let cardsHTML = rounds.map(r => `
+          <div class="selection-card" onclick="selectRound('${r}')">
+            ${r}
+            <div class="sub">クリックして決定</div>
+          </div>
+        `).join('');
+
+        view.innerHTML = `
+          <h1>ラウンドを選択してください</h1>
+          <p class="subtitle">【${currentDept}部門】のラウンドを選択してください</p>
+          <div class="card-grid">${cardsHTML}</div>
+          <button class="btn-back" onclick="navTo('dept')">← 部門選択に戻る</button>
+        `;
+        return;
+      }
+
+      if (!currentMatch) {
+        const matches = Object.keys(treeData[currentDept][currentRound]);
+        let cardsHTML = matches.map(m => `
+          <div class="selection-card" onclick="selectMatch('${m}')">
+            第 ${m} 試合
+            <div class="sub">結果を見る</div>
+          </div>
+        `).join('');
+
+        view.innerHTML = `
+          <h1>試合を選択してください</h1>
+          <p class="subtitle">【${currentDept}部門 / ${currentRound}】の対戦カードを選択してください</p>
+          <div class="card-grid">${cardsHTML}</div>
+          <button class="btn-back" onclick="navTo('round')">← ラウンド選択に戻る</button>
+        `;
+        return;
+      }
+
+      renderResultView(view);
+    }
+
+    function selectDept(d) { currentDept = d; render(); }
+    function selectRound(r) { currentRound = r; render(); }
+    function selectMatch(m) { currentMatch = m; currentSongTab = 'final'; render(); }
+
+    function renderResultView(view) {
+      const matchRows = treeData[currentDept][currentRound][currentMatch];
+      const isDoubles = currentDept.toUpperCase().includes("DOUBLES");
+      
+      const songMap = {};
+      const teamScores = {};
+
+      matchRows.forEach(r => {
+        if (r.songNum) {
+          if (r.songName) songMap[r.songNum] = r.songName;
+
+          // DOUBLESの場合は「チーム名 (プレイヤー名)」形式で入力された名称からチーム名を抽出
+          let entityName = r.name;
+          if (isDoubles && r.name.includes("(")) {
+            entityName = r.name.split("(")[0].trim();
+          }
+
+          if (!teamScores[entityName]) {
+            teamScores[entityName] = { total: 0, songs: {}, p: 0, g: 0, gd: 0, b: 0, m: 0 };
+          }
+          
+          teamScores[entityName].songs[r.songNum] = (teamScores[entityName].songs[r.songNum] || 0) + r.score;
+          teamScores[entityName].total += r.score;
+
+          teamScores[entityName].p += (parseInt(r.p, 10) || 0);
+          teamScores[entityName].g += (parseInt(r.g, 10) || 0);
+          teamScores[entityName].gd += (parseInt(r.gd, 10) || 0);
+          teamScores[entityName].b += (parseInt(r.b, 10) || 0);
+          teamScores[entityName].m += (parseInt(r.m, 10) || 0);
+        }
+      });
+
+      const songNums = Object.keys(songMap).sort((a,b) => a - b);
+
+      let tabsHTML = songNums.map(num => `
+        <button class="tab-btn ${currentSongTab === num ? 'active' : ''}" onclick="switchTab('${num}')">
+          ${num}曲目
+        </button>
+      `).join('');
+
+      tabsHTML += `
+        <button class="tab-btn ${currentSongTab === 'final' ? 'active' : ''}" onclick="switchTab('final')">
+          🏆 最終結果
+        </button>
+      `;
+
+      let tableHeader = "";
+      let tableBody = "";
+
+      // 🏆 最終結果タブ（DOUBLESもチーム単位で2つにまとめる）
+      if (currentSongTab === 'final') {
+        tableHeader = `
+          <tr>
+            <th>順位</th><th>${isDoubles ? 'チーム名' : 'プレイヤー名'}</th>
+            <th class="p-perfect">PERFECT</th><th class="p-great">GREAT</th>
+            <th class="p-good">GOOD</th><th class="p-bad">BAD</th>
+            <th class="p-miss">MISS</th>`;
+        
+        songNums.forEach(num => {
+          tableHeader += `<th>${num}曲目<small>${songMap[num]}</small></th>`;
+        });
+        tableHeader += `<th>合計スコア</th></tr>`;
+
+        const sorted = Object.keys(teamScores)
+          .map(name => ({ name, ...teamScores[name] }))
+          .sort((a, b) => b.total - a.total);
+
+        tableBody = sorted.map((p, idx) => {
+          const rank = idx + 1;
+          let row = `
+            <tr>
+              <td class="${rank <= 3 ? 'rank-' + rank : ''}">${rank}位</td>
+              <td><b>${p.name}</b></td>
+              <td class="p-perfect">${p.p.toLocaleString()}</td>
+              <td class="p-great">${p.g.toLocaleString()}</td>
+              <td class="p-good">${p.gd.toLocaleString()}</td>
+              <td class="p-bad">${p.b.toLocaleString()}</td>
+              <td class="p-miss">${p.m.toLocaleString()}</td>
+          `;
+
+          songNums.forEach(num => {
+            const sScore = p.songs[num] !== undefined ? p.songs[num].toLocaleString() : '-';
+            row += `<td class="sub-score">${sScore}</td>`;
+          });
+
+          row += `<td class="score">${p.total.toLocaleString()}</td></tr>`;
+          return row;
+        }).join('');
+
+      } else {
+        // 各曲の個別リザルト（DOUBLES 3曲目は 2人×2チーム＝4行を表示）
+        tableHeader = `
+          <tr>
+            <th>順位</th><th>${isDoubles ? 'チーム名 / プレイヤー名' : 'プレイヤー名'}</th>
+            <th class="p-perfect">PERFECT</th><th class="p-great">GREAT</th>
+            <th class="p-good">GOOD</th><th class="p-bad">BAD</th>
+            <th class="p-miss">MISS</th><th>得点</th>
+          </tr>`;
+
+        const targetSongRows = matchRows.filter(r => r.songNum === currentSongTab);
+        const sorted = targetSongRows.sort((a, b) => b.score - a.score);
+
+        tableBody = sorted.map((p, idx) => {
+          const rank = idx + 1;
+          return `
+            <tr>
+              <td class="${rank <= 3 ? 'rank-' + rank : ''}">${rank}位</td>
+              <td><b>${p.name}</b></td>
+              <td class="p-perfect">${parseInt(p.p, 10).toLocaleString()}</td>
+              <td class="p-great">${parseInt(p.g, 10).toLocaleString()}</td>
+              <td class="p-good">${parseInt(p.gd, 10).toLocaleString()}</td>
+              <td class="p-bad">${parseInt(p.b, 10).toLocaleString()}</td>
+              <td class="p-miss">${parseInt(p.m, 10).toLocaleString()}</td>
+              <td class="score">${p.score.toLocaleString()}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      view.innerHTML = `
+        <h1>${currentDept}部門 - ${currentRound} 第${currentMatch}試合</h1>
+        <div class="tab-container">${tabsHTML}</div>
+        <div class="table-container">
+          <table>
+            <thead>${tableHeader}</thead>
+            <tbody>${tableBody}</tbody>
+          </table>
+        </div>
+        <button class="btn-back" onclick="navTo('match')">← 試合選択に戻る</button>
+      `;
+    }
+
+    function switchTab(tab) {
+      currentSongTab = tab;
+      render();
+    }
+  </script>
+</body>
+</html>
