@@ -106,14 +106,11 @@
     .score { font-family: monospace; font-size: 1.5rem; color: #006699; font-weight: bold; }
     .sub-score { font-family: monospace; font-size: 1.25rem; color: #333333; }
     
+    /* 勝者（トップ得点）の強調 */
     .score-top {
       font-size: 1.8rem !important; color: #d4a000 !important; font-weight: 900 !important;
       text-shadow: 0 0 10px rgba(212, 160, 0, 0.3); transform: scale(1.08); display: inline-block;
     }
-
-    .rank-1 { color: #d4a000; font-size: 1.5rem; font-weight: bold; }
-    .rank-2 { color: #777777; font-size: 1.35rem; font-weight: bold; }
-    .rank-3 { color: #b85c00; font-size: 1.25rem; font-weight: bold; }
 
     .score-box { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; }
     .badge-ap, .badge-fc {
@@ -171,29 +168,23 @@
 
       if (currentSongTab === 'final') {
         if (!isDoubles) {
-          // シングルス最終結果：Enterを押す毎に 1曲目(1) -> 2曲目(2) -> 3曲目(3) -> 合計＆順位(4)
+          // シングルス最終結果：1〜3曲目(1~3) -> 合計得点(4)
           const targets = document.querySelectorAll(`[data-anim-step="${animStep}"]`);
           targets.forEach(el => el.classList.add('anim-visible'));
         } else {
-          // ダブルス最終結果：1回目で曲結果(1〜3)、2回目で判定合計(4〜8)、3回目で合計・順位(9)
+          // ダブルス最終結果：1回目で判定合計(1〜5)、2回目で合計得点(6)を表示
           if (animStep === 1) {
-            for (let step = 1; step <= 3; step++) {
+            for (let step = 1; step <= 5; step++) {
               setTimeout(() => {
                 document.querySelectorAll(`[data-anim-step="${step}"]`).forEach(el => el.classList.add('anim-visible'));
-              }, (step - 1) * 120);
+              }, (step - 1) * 100);
             }
           } else if (animStep === 2) {
-            for (let step = 4; step <= 8; step++) {
-              setTimeout(() => {
-                document.querySelectorAll(`[data-anim-step="${step}"]`).forEach(el => el.classList.add('anim-visible'));
-              }, (step - 4) * 100);
-            }
-          } else if (animStep === 3) {
-            document.querySelectorAll(`[data-anim-step="9"]`).forEach(el => el.classList.add('anim-visible'));
+            document.querySelectorAll(`[data-anim-step="6"]`).forEach(el => el.classList.add('anim-visible'));
           }
         }
       } else {
-        // 各楽曲画面：1回目で判定(P~M)が上から順に、2回目で得点
+        // 各楽曲画面：1回目で判定(P~M)、2回目で得点
         if (animStep === 1) {
           for (let step = 1; step <= 5; step++) {
             setTimeout(() => {
@@ -289,13 +280,6 @@
       return `<div class="score-box ${topClass}">${badgeHTML}<span>${formattedScore}</span></div>`;
     }
 
-    function calculateRanks(scores) {
-      const sorted = [...scores].sort((a, b) => b - a);
-      const rankMap = new Map();
-      sorted.forEach((score, index) => { if (!rankMap.has(score)) rankMap.set(score, index + 1); });
-      return rankMap;
-    }
-
     function renderBreadcrumb() {
       const nav = document.getElementById('breadcrumb');
       let html = `<span class="breadcrumb-item" onclick="navTo('dept')">TOP (部門選択)</span>`;
@@ -358,7 +342,7 @@
         }
 
         let songCardsHTML = ["1", "2", "3"].map(num => `<div class="selection-card" onclick="selectSongTab('${num}')">${num}曲目<div class="sub">${num}曲目のスコア結果</div></div>`).join('');
-        songCardsHTML += `<div class="selection-card gold-card" onclick="selectSongTab('final')">最終結果<div class="sub">総合スコア・最終順位</div></div>`;
+        songCardsHTML += `<div class="selection-card gold-card" onclick="selectSongTab('final')">最終結果<div class="sub">総合スコア</div></div>`;
 
         view.innerHTML = `<h1>表示する結果を選択してください</h1><p class="subtitle">【${currentDept}部門 / ${currentRound} ${getMatchDisplayName(currentDept, currentRound, currentMatch)}】</p>
           <div class="card-grid">${songCardsHTML}</div><button class="btn-back" onclick="navTo('match')">← 試合選択に戻る</button>`;
@@ -385,7 +369,6 @@
       const csvFinalRows = {};
 
       if (isDoubles) {
-        // CSVのパースとチーム割り当てロジック（修正部分）
         matchRows.forEach(r => {
           if (r.songNum === "合計" || r.songNum === "最終結果" || r.songNum === "total") {
             const teamName = r.name;
@@ -450,7 +433,6 @@
         });
 
       } else {
-        // シングルスデータ集計
         matchRows.forEach(r => {
           if (!teamData[r.name]) {
             if (!teamOrder.includes(r.name)) teamOrder.push(r.name);
@@ -478,54 +460,51 @@
 
         let allTotals = teamOrder.map(n => (isDoubles && csvFinalRows[n]) ? csvFinalRows[n].score : teamData[n].total);
         const maxScore = Math.max(...allTotals);
-        const rankMap = calculateRanks(allTotals);
 
-        // 最終結果画面のみチーム名を表示
         let headerRow = `<tr><th class="row-header"></th>` +
           teamOrder.map((name, idx) => {
             const colorClass = isDoubles ? ((idx === 0) ? 'team-blue' : 'team-orange') : '';
             return `<th class="player-header ${colorClass}">${name}</th>`;
           }).join('') + `</tr>`;
 
-        let songRows = songNums.map((num, idx) => {
-          const sName = songMap[num] ? `<br><small style="font-weight:normal; color:#555;">（${songMap[num]}）</small>` : '';
-          let row = `<tr><td class="row-header">${num}曲目${sName}</td>`;
-          teamOrder.forEach(n => {
-            const sScore = teamData[n].songs[num] !== undefined ? teamData[n].songs[num] : 0;
-            const sFlg = teamData[n].flgs[num] || "";
-            const cellContent = teamData[n].songs[num] !== undefined ? renderScoreCell(sScore, sFlg, false, true) : '-';
-            row += `<td class="sub-score"><span class="anim-target" data-anim-step="${idx + 1}">${cellContent}</span></td>`;
-          });
-          return row + `</tr>`;
-        }).join('');
+        let songRows = "";
+        if (!isDoubles) {
+          songRows = songNums.map((num, idx) => {
+            const sName = songMap[num] ? `<br><small style="font-weight:normal; color:#555;">（${songMap[num]}）</small>` : '';
+            let row = `<tr><td class="row-header">${num}曲目${sName}</td>`;
+            teamOrder.forEach(n => {
+              const sScore = teamData[n].songs[num] !== undefined ? teamData[n].songs[num] : 0;
+              const sFlg = teamData[n].flgs[num] || "";
+              const cellContent = teamData[n].songs[num] !== undefined ? renderScoreCell(sScore, sFlg, false, true) : '-';
+              row += `<td class="sub-score"><span class="anim-target" data-anim-step="${idx + 1}">${cellContent}</span></td>`;
+            });
+            return row + `</tr>`;
+          }).join('');
+        }
 
         let summaryRows = "";
         if (isDoubles) {
           const getVal = (n, key) => (csvFinalRows[n] ? csvFinalRows[n][key] : teamData[n][key]).toLocaleString();
-          summaryRows += `<tr><td class="row-header"><span class="p-perfect">PERFECT 合計</span></td>` + teamOrder.map(n => `<td><span class="anim-target p-perfect" data-anim-step="4">${getVal(n, 'p')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + teamOrder.map(n => `<td class="p-great"><span class="anim-target" data-anim-step="5">${getVal(n, 'g')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + teamOrder.map(n => `<td class="p-good"><span class="anim-target" data-anim-step="6">${getVal(n, 'gd')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + teamOrder.map(n => `<td class="p-bad"><span class="anim-target" data-anim-step="7">${getVal(n, 'b')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + teamOrder.map(n => `<td class="p-miss"><span class="anim-target" data-anim-step="8">${getVal(n, 'm')}</span></td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header"><span class="p-perfect">PERFECT 合計</span></td>` + teamOrder.map(n => `<td><span class="anim-target p-perfect" data-anim-step="1">${getVal(n, 'p')}</span></td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + teamOrder.map(n => `<td class="p-great"><span class="anim-target" data-anim-step="2">${getVal(n, 'g')}</span></td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + teamOrder.map(n => `<td class="p-good"><span class="anim-target" data-anim-step="3">${getVal(n, 'gd')}</span></td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + teamOrder.map(n => `<td class="p-bad"><span class="anim-target" data-anim-step="4">${getVal(n, 'b')}</span></td>`).join('') + `</tr>`;
+          summaryRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + teamOrder.map(n => `<td class="p-miss"><span class="anim-target" data-anim-step="5">${getVal(n, 'm')}</span></td>`).join('') + `</tr>`;
         }
 
-        let totalStep = isDoubles ? 9 : 4;
+        let totalStep = isDoubles ? 6 : 4;
         let totalRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">合計得点</td>` + teamOrder.map(n => {
           const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
           const isWinner = finalScore === maxScore && maxScore > 0;
           return `<td class="score"><span class="anim-target" data-anim-step="${totalStep}">${renderScoreCell(finalScore, "", isWinner, false)}</span></td>`;
         }).join('') + `</tr>`;
 
-        let rankRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#111;">順位</td>` + teamOrder.map(n => {
-          const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
-          const rank = rankMap.get(finalScore);
-          return `<td class="${rank <= 3 ? 'rank-' + rank : ''}"><span class="anim-target" data-anim-step="${totalStep}">${rank}位</span></td>`;
-        }).join('') + `</tr>`;
+        // 順位行（rankRow）は完全に削除しました
 
-        tableHTML = `<thead>${headerRow}</thead><tbody>${songRows}${summaryRows}${totalRow}${rankRow}</tbody>`;
+        tableHTML = `<thead>${headerRow}</thead><tbody>${songRows}${summaryRows}${totalRow}</tbody>`;
 
       } else {
-        // 1〜3曲目画面：チーム名を非表示にし、プレイヤー名のみ表示
+        // 1〜3曲目画面
         const songNameStr = songMap[currentSongTab] ? songMap[currentSongTab] : `${currentSongTab}曲目`;
         titleBannerHTML = `<div class="song-title-banner">${currentSongTab}曲目：${songNameStr}</div>`;
 
@@ -537,7 +516,7 @@
             if (members.length > 0) {
               members.forEach(mName => {
                 columns.push({
-                  header: mName, // プレイヤー名のみ表示
+                  header: mName,
                   teamIdx: teamIdx,
                   data: teamData[tName].members[mName]?.[currentSongTab]
                 });
@@ -550,7 +529,7 @@
           teamOrder.forEach((tName, teamIdx) => {
             const songDet = teamData[tName].songDetails[currentSongTab];
             const pName = songDet ? songDet.name : "";
-            const headerLabel = pName || ""; // プレイヤー名のみ表示
+            const headerLabel = pName || "";
 
             columns.push({
               header: headerLabel,
