@@ -106,6 +106,7 @@
     .score { font-family: monospace; font-size: 1.5rem; color: #006699; font-weight: bold; }
     .sub-score { font-family: monospace; font-size: 1.25rem; color: #333333; }
     
+    /* シングルス用 最高得点強調表示 */
     .score-top {
       font-size: 1.8rem !important; color: #d4a000 !important; font-weight: 900 !important;
       text-shadow: 0 0 10px rgba(212, 160, 0, 0.3); transform: scale(1.08); display: inline-block;
@@ -491,7 +492,8 @@
         let totalStep = isDoubles ? 6 : 4;
         let totalRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">合計得点</td>` + teamOrder.map(n => {
           const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
-          const isWinner = finalScore === maxScore && maxScore > 0;
+          // シングルスの場合のみ最高得点を強調（isWinner = true）
+          const isWinner = !isDoubles && (finalScore === maxScore && maxScore > 0);
           return `<td class="score"><span class="anim-target" data-anim-step="${totalStep}">${renderScoreCell(finalScore, "", isWinner, false)}</span></td>`;
         }).join('') + `</tr>`;
 
@@ -559,10 +561,10 @@
         let bRow = `<tr><td class="row-header p-bad">BAD</span></td>` + columns.map(c => `<td class="p-bad"><span class="anim-target" data-anim-step="4">${getValStr(c, 'b')}</span></td>`).join('') + `</tr>`;
         let mRow = `<tr><td class="row-header p-miss">MISS</span></td>` + columns.map(c => `<td class="p-miss"><span class="anim-target" data-anim-step="5">${getValStr(c, 'm')}</span></td>`).join('') + `</tr>`;
 
-        // 得点セル内のハイフン「-」およびスコア要素すべてに anim-target と data-anim-step="6" を適用して完全初期非表示化
+        // 得点セル：シングルス（!isDoubles）のときのみ最高得点を強調表示
         let scoreRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">得点</td>` + columns.map(c => {
           if (!c.data) return `<td class="score"><span class="anim-target" data-anim-step="6">-</span></td>`;
-          const isTop = c.data.score === maxScore && maxScore > 0;
+          const isTop = !isDoubles && (c.data.score === maxScore && maxScore > 0);
           return `<td class="score"><span class="anim-target" data-anim-step="6">${renderScoreCell(c.data.score, c.data.flg, isTop, true)}</span></td>`;
         }).join('') + `</tr>`;
 
