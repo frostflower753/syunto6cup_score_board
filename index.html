@@ -106,7 +106,6 @@
     .score { font-family: monospace; font-size: 1.5rem; color: #006699; font-weight: bold; }
     .sub-score { font-family: monospace; font-size: 1.25rem; color: #333333; }
     
-    /* 勝者（トップ得点）の強調 */
     .score-top {
       font-size: 1.8rem !important; color: #d4a000 !important; font-weight: 900 !important;
       text-shadow: 0 0 10px rgba(212, 160, 0, 0.3); transform: scale(1.08); display: inline-block;
@@ -168,11 +167,9 @@
 
       if (currentSongTab === 'final') {
         if (!isDoubles) {
-          // シングルス最終結果：1〜3曲目(1~3) -> 合計得点(4)
           const targets = document.querySelectorAll(`[data-anim-step="${animStep}"]`);
           targets.forEach(el => el.classList.add('anim-visible'));
         } else {
-          // ダブルス最終結果：1回目で判定合計(1〜5)、2回目で合計得点(6)を表示
           if (animStep === 1) {
             for (let step = 1; step <= 5; step++) {
               setTimeout(() => {
@@ -184,7 +181,6 @@
           }
         }
       } else {
-        // 各楽曲画面：1回目で判定(P~M)、2回目で得点
         if (animStep === 1) {
           for (let step = 1; step <= 5; step++) {
             setTimeout(() => {
@@ -499,8 +495,6 @@
           return `<td class="score"><span class="anim-target" data-anim-step="${totalStep}">${renderScoreCell(finalScore, "", isWinner, false)}</span></td>`;
         }).join('') + `</tr>`;
 
-        // 順位行（rankRow）は完全に削除しました
-
         tableHTML = `<thead>${headerRow}</thead><tbody>${songRows}${summaryRows}${totalRow}</tbody>`;
 
       } else {
@@ -565,8 +559,9 @@
         let bRow = `<tr><td class="row-header p-bad">BAD</span></td>` + columns.map(c => `<td class="p-bad"><span class="anim-target" data-anim-step="4">${getValStr(c, 'b')}</span></td>`).join('') + `</tr>`;
         let mRow = `<tr><td class="row-header p-miss">MISS</span></td>` + columns.map(c => `<td class="p-miss"><span class="anim-target" data-anim-step="5">${getValStr(c, 'm')}</span></td>`).join('') + `</tr>`;
 
+        // 得点セル内のハイフン「-」およびスコア要素すべてに anim-target と data-anim-step="6" を適用して完全初期非表示化
         let scoreRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">得点</td>` + columns.map(c => {
-          if (!c.data) return `<td class="score">-</td>`;
+          if (!c.data) return `<td class="score"><span class="anim-target" data-anim-step="6">-</span></td>`;
           const isTop = c.data.score === maxScore && maxScore > 0;
           return `<td class="score"><span class="anim-target" data-anim-step="6">${renderScoreCell(c.data.score, c.data.flg, isTop, true)}</span></td>`;
         }).join('') + `</tr>`;
