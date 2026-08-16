@@ -385,7 +385,7 @@
       const csvFinalRows = {};
 
       if (isDoubles) {
-        // CSVで登場した順番（上の行から順）通りにチーム順を保持
+        // CSVのパースとチーム割り当てロジック（修正部分）
         matchRows.forEach(r => {
           if (r.songNum === "合計" || r.songNum === "最終結果" || r.songNum === "total") {
             const teamName = r.name;
@@ -450,7 +450,7 @@
         });
 
       } else {
-        // シングルスでもCSVの順番通りに保持
+        // シングルスデータ集計
         matchRows.forEach(r => {
           if (!teamData[r.name]) {
             if (!teamOrder.includes(r.name)) teamOrder.push(r.name);
@@ -537,7 +537,7 @@
             if (members.length > 0) {
               members.forEach(mName => {
                 columns.push({
-                  header: mName, // チーム名を外してプレイヤー名のみ
+                  header: mName, // プレイヤー名のみ表示
                   teamIdx: teamIdx,
                   data: teamData[tName].members[mName]?.[currentSongTab]
                 });
@@ -550,7 +550,7 @@
           teamOrder.forEach((tName, teamIdx) => {
             const songDet = teamData[tName].songDetails[currentSongTab];
             const pName = songDet ? songDet.name : "";
-            const headerLabel = pName || ""; // チーム名を外してプレイヤー名のみ
+            const headerLabel = pName || ""; // プレイヤー名のみ表示
 
             columns.push({
               header: headerLabel,
@@ -581,10 +581,10 @@
         const getValStr = (col, key) => col.data ? parseInt(col.data[key] || 0, 10).toLocaleString() : '-';
 
         let pRow = `<tr><td class="row-header"><span class="p-perfect">PERFECT</span></td>` + columns.map(c => `<td><span class="anim-target p-perfect" data-anim-step="1">${getValStr(c, 'p')}</span></td>`).join('') + `</tr>`;
-        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + columns.map(c => `<td class="p-great"><span class="anim-target" data-anim-step="2">${getValStr(c, 'g')}</span></td>`).join('') + `</tr>`;
-        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + columns.map(c => `<td class="p-good"><span class="anim-target" data-anim-step="3">${getValStr(c, 'gd')}</span></td>`).join('') + `</tr>`;
-        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + columns.map(c => `<td class="p-bad"><span class="anim-target" data-anim-step="4">${getValStr(c, 'b')}</span></td>`).join('') + `</tr>`;
-        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + columns.map(c => `<td class="p-miss"><span class="anim-target" data-anim-step="5">${getValStr(c, 'm')}</span></td>`).join('') + `</tr>`;
+        let gRow = `<tr><td class="row-header p-great">GREAT</span></td>` + columns.map(c => `<td class="p-great"><span class="anim-target" data-anim-step="2">${getValStr(c, 'g')}</span></td>`).join('') + `</tr>`;
+        let gdRow = `<tr><td class="row-header p-good">GOOD</span></td>` + columns.map(c => `<td class="p-good"><span class="anim-target" data-anim-step="3">${getValStr(c, 'gd')}</span></td>`).join('') + `</tr>`;
+        let bRow = `<tr><td class="row-header p-bad">BAD</span></td>` + columns.map(c => `<td class="p-bad"><span class="anim-target" data-anim-step="4">${getValStr(c, 'b')}</span></td>`).join('') + `</tr>`;
+        let mRow = `<tr><td class="row-header p-miss">MISS</span></td>` + columns.map(c => `<td class="p-miss"><span class="anim-target" data-anim-step="5">${getValStr(c, 'm')}</span></td>`).join('') + `</tr>`;
 
         let scoreRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">得点</td>` + columns.map(c => {
           if (!c.data) return `<td class="score">-</td>`;
