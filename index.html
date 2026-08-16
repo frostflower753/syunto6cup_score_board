@@ -106,15 +106,21 @@
     .score { font-family: monospace; font-size: 1.5rem; color: #006699; font-weight: bold; }
     .sub-score { font-family: monospace; font-size: 1.25rem; color: #333333; }
     
-    /* シングルス用 最高得点強調表示 */
-    .score-top {
-      font-size: 1.8rem !important; color: #d4a000 !important; font-weight: 900 !important;
-      text-shadow: 0 0 10px rgba(212, 160, 0, 0.3); transform: scale(1.08); display: inline-block;
-    }
+    /* 各種スコア強調表示スタイル */
+    .score-gold { font-size: 1.8rem !important; color: #d4a000 !important; font-weight: 900 !important; text-shadow: 0 0 10px rgba(212, 160, 0, 0.3); transform: scale(1.08); display: inline-block; }
+    .score-silver { font-size: 1.7rem !important; color: #a0a0a0 !important; font-weight: 900 !important; text-shadow: 0 0 8px rgba(160, 160, 160, 0.3); transform: scale(1.06); display: inline-block; }
+    .score-bronze { font-size: 1.6rem !important; color: #b87333 !important; font-weight: 900 !important; text-shadow: 0 0 6px rgba(184, 115, 51, 0.3); transform: scale(1.04); display: inline-block; }
+    .score-red { font-size: 1.6rem !important; color: #cc3333 !important; font-weight: 900 !important; text-shadow: 0 0 6px rgba(204, 51, 51, 0.3); transform: scale(1.04); display: inline-block; }
+    
+    /* 控えめな強調表示 (シングルス最終結果の各曲トップ用) */
+    .score-mild-top { font-size: 1.4rem !important; color: #b38800 !important; font-weight: bold !important; display: inline-block; }
 
     /* 順位表示スタイル */
-    .rank-cell { font-weight: bold; font-size: 1.3rem; color: #444; }
-    .rank-top { font-size: 1.5rem; color: #d4a000; font-weight: 900; }
+    .rank-gold { font-size: 1.5rem; color: #d4a000; font-weight: 900; }
+    .rank-silver { font-size: 1.4rem; color: #a0a0a0; font-weight: 900; }
+    .rank-bronze { font-size: 1.35rem; color: #b87333; font-weight: 900; }
+    .rank-red { font-size: 1.35rem; color: #cc3333; font-weight: 900; }
+    .rank-black { font-weight: bold; font-size: 1.3rem; color: #444; }
 
     .score-box { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; }
     .badge-ap, .badge-fc {
@@ -271,18 +277,16 @@
       return `第${matchNum}試合`;
     }
 
-    function renderScoreCell(score, flg, isTop = false, showFlg = true) {
+    function renderScoreCell(score, flg, scoreClass = "", showFlg = true) {
       const formattedScore = score.toLocaleString();
       let badgeHTML = '';
       if (showFlg) {
         if (flg === "AP" || flg === "ALL PERFECT") badgeHTML = `<span class="badge-ap">ALL PERFECT</span>`;
         else if (flg === "FC" || flg === "FULL COMBO") badgeHTML = `<span class="badge-fc">FULL COMBO</span>`;
       }
-      const topClass = isTop ? 'score-top' : '';
-      return `<div class="score-box ${topClass}">${badgeHTML}<span>${formattedScore}</span></div>`;
+      return `<div class="score-box ${scoreClass}">${badgeHTML}<span>${formattedScore}</span></div>`;
     }
 
-    // スコア配列から各要素の順位マップを取得する関数（同点対応）
     function getRankMap(scores) {
       const sorted = [...scores].sort((a, b) => b - a);
       const rankMap = {};
@@ -294,6 +298,58 @@
         }
       });
       return rankMap;
+    }
+
+    // 順位表示文字列および表示色のクラスを決定する関数
+    function getRankInfo(dept, round, rank) {
+      if (rank === "-") return { str: "-", colorClass: "color-black" };
+      
+      let str = `${rank}位`;
+      let colorClass = "color-black";
+      let hideRank = false;
+
+      if (dept === "STANDARD") {
+        if (round === "準々決勝") {
+          if (rank === 1) colorClass = "color-gold";
+        } else if (round === "準決勝") {
+          if (rank === 1) colorClass = "color-gold";
+          else if (rank === 2) colorClass = "color-red";
+        } else if (round === "決勝") {
+          if (rank === 1) colorClass = "color-gold";
+          else if (rank === 2) colorClass = "color-silver";
+          else if (rank === 3) colorClass = "color-bronze";
+        }
+      } else if (dept === "NEXT") {
+        if (round === "準々決勝") {
+          if (rank === 1) colorClass = "color-gold";
+          else if (rank === 2) colorClass = "color-red";
+        } else if (round === "準決勝") {
+          if (rank === 1) colorClass = "color-gold";
+          else if (rank === 2) colorClass = "color-red";
+        } else if (round === "決勝") {
+          if (rank === 1) colorClass = "color-gold";
+          else if (rank === 2) colorClass = "color-silver";
+          else if (rank === 3) colorClass = "color-bronze";
+        }
+      } else if (dept === "ULTIMATE") {
+        if (round === "準々決勝") {
+          if (rank === 1) colorClass = "color-gold";
+          else if (rank === 2) colorClass = "color-red";
+        } else if (round === "準決勝") {
+          hideRank = true;
+          if (rank === 1) colorClass = "color-gold";
+        } else if (round === "決勝") {
+          hideRank = true;
+          if (rank === 1) colorClass = "color-gold";
+          else if (rank === 2) colorClass = "color-silver";
+        }
+      } else {
+        if (rank === 1) colorClass = "color-gold";
+      }
+
+      if (hideRank) str = "";
+
+      return { str, colorClass };
     }
 
     function renderBreadcrumb() {
@@ -486,13 +542,29 @@
 
         let songRows = "";
         if (!isDoubles) {
+          const songMaxScores = {};
+          songNums.forEach(num => {
+            let maxS = -1;
+            teamOrder.forEach(n => {
+              const s = teamData[n].songs[num];
+              if (s !== undefined && s > maxS) maxS = s;
+            });
+            songMaxScores[num] = maxS;
+          });
+
           songRows = songNums.map((num, idx) => {
             const sName = songMap[num] ? `<br><small style="font-weight:normal; color:#555;">（${songMap[num]}）</small>` : '';
             let row = `<tr><td class="row-header">${num}曲目${sName}</td>`;
             teamOrder.forEach(n => {
               const sScore = teamData[n].songs[num] !== undefined ? teamData[n].songs[num] : 0;
               const sFlg = teamData[n].flgs[num] || "";
-              const cellContent = teamData[n].songs[num] !== undefined ? renderScoreCell(sScore, sFlg, false, true) : '-';
+              
+              let sClass = "";
+              if (sScore > 0 && sScore === songMaxScores[num]) {
+                sClass = "score-mild-top";
+              }
+              
+              const cellContent = teamData[n].songs[num] !== undefined ? renderScoreCell(sScore, sFlg, sClass, true) : '-';
               row += `<td class="sub-score"><span class="anim-target" data-anim-step="${idx + 1}">${cellContent}</span></td>`;
             });
             return row + `</tr>`;
@@ -512,28 +584,49 @@
         let totalStep = isDoubles ? 6 : 4;
         let totalRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">合計得点</td>` + teamOrder.map(n => {
           const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
-          const isWinner = !isDoubles && (finalScore === maxScore && maxScore > 0);
-          return `<td class="score"><span class="anim-target" data-anim-step="${totalStep}">${renderScoreCell(finalScore, "", isWinner, false)}</span></td>`;
+          
+          let sClass = "";
+          if (isDoubles) {
+            if (finalScore === maxScore && maxScore > 0) sClass = "score-gold";
+          } else {
+            const rank = finalRankMap[finalScore] || "-";
+            const rInfo = getRankInfo(currentDept, currentRound, rank);
+            if (rInfo.colorClass === "color-gold") sClass = "score-gold";
+            else if (rInfo.colorClass === "color-silver") sClass = "score-silver";
+            else if (rInfo.colorClass === "color-bronze") sClass = "score-bronze";
+            else if (rInfo.colorClass === "color-red") sClass = "score-red";
+          }
+          
+          return `<td class="score"><span class="anim-target" data-anim-step="${totalStep}">${renderScoreCell(finalScore, "", sClass, false)}</span></td>`;
         }).join('') + `</tr>`;
 
-        // シングルスの場合に順位行を出力
         let rankRow = "";
         if (!isDoubles) {
-          let rankStep = totalStep + 1;
-          rankRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">順位</td>` + teamOrder.map(n => {
+          let hasAnyRankStr = false;
+          let rankCells = teamOrder.map(n => {
             const finalScore = teamData[n].total;
             const rank = finalRankMap[finalScore] || "-";
-            const isTop = rank === 1;
-            const rankStr = isTop ? `👑 1位` : (rank !== "-" ? `${rank}位` : "-");
-            const rankClass = isTop ? 'rank-top' : 'rank-cell';
-            return `<td><span class="anim-target ${rankClass}" data-anim-step="${rankStep}">${rankStr}</span></td>`;
-          }).join('') + `</tr>`;
+            const rInfo = getRankInfo(currentDept, currentRound, rank);
+            
+            if (rInfo.str !== "") hasAnyRankStr = true;
+            
+            let rClass = "rank-black";
+            if (rInfo.colorClass === "color-gold") rClass = "rank-gold";
+            else if (rInfo.colorClass === "color-silver") rClass = "rank-silver";
+            else if (rInfo.colorClass === "color-bronze") rClass = "rank-bronze";
+            else if (rInfo.colorClass === "color-red") rClass = "rank-red";
+            
+            return `<td><span class="anim-target ${rClass}" data-anim-step="${totalStep}">${rInfo.str}</span></td>`;
+          });
+          
+          if (hasAnyRankStr) {
+            rankRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">順位</td>${rankCells.join('')}</tr>`;
+          }
         }
 
         tableHTML = `<thead>${headerRow}</thead><tbody>${songRows}${summaryRows}${totalRow}${rankRow}</tbody>`;
 
       } else {
-        // 1〜3曲目画面
         const songNameStr = songMap[currentSongTab] ? songMap[currentSongTab] : `${currentSongTab}曲目`;
         titleBannerHTML = `<div class="song-title-banner">${currentSongTab}曲目：${songNameStr}</div>`;
 
@@ -597,19 +690,20 @@
 
         let scoreRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">得点</td>` + columns.map(c => {
           if (!c.data) return `<td class="score"><span class="anim-target" data-anim-step="6">-</span></td>`;
-          const isTop = !isDoubles && (c.data.score === maxScore && maxScore > 0);
-          return `<td class="score"><span class="anim-target" data-anim-step="6">${renderScoreCell(c.data.score, c.data.flg, isTop, true)}</span></td>`;
+          let sClass = "";
+          if (c.data.score === maxScore && maxScore > 0) {
+            sClass = "score-gold";
+          }
+          return `<td class="score"><span class="anim-target" data-anim-step="6">${renderScoreCell(c.data.score, c.data.flg, sClass, true)}</span></td>`;
         }).join('') + `</tr>`;
 
-        // シングルスの場合に順位行を出力
         let rankRow = "";
         if (!isDoubles) {
           rankRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">順位</td>` + columns.map(c => {
-            if (!c.data) return `<td><span class="anim-target rank-cell" data-anim-step="7">-</span></td>`;
+            if (!c.data) return `<td><span class="anim-target rank-black" data-anim-step="7">-</span></td>`;
             const rank = songRankMap[c.data.score] || "-";
-            const isTop = rank === 1;
-            const rankStr = isTop ? `👑 1位` : (rank !== "-" ? `${rank}位` : "-");
-            const rankClass = isTop ? 'rank-top' : 'rank-cell';
+            const rankStr = rank !== "-" ? `${rank}位` : "-";
+            const rankClass = rank === 1 ? 'rank-gold' : 'rank-black';
             return `<td><span class="anim-target ${rankClass}" data-anim-step="7">${rankStr}</span></td>`;
           }).join('') + `</tr>`;
         }
