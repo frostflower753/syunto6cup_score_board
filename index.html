@@ -137,7 +137,7 @@
     }
     .badge-fc { color: #d0006f; }
 
-    .btn-back { margin-top: 30px; background: #ffffff; border: 1px solid #cccccc; color: #555555; padding: 10px 30px; font-size: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .btn-back { margin-top: 20px; background: #ffffff; border: 1px solid #cccccc; color: #555555; padding: 10px 30px; font-size: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
     .btn-back:hover { background: #f0f0f0; color: #111; }
 
     @keyframes dropIn { 0% { opacity: 0; transform: translateY(-6px); } 100% { opacity: 1; transform: translateY(0); } }
@@ -150,84 +150,29 @@
     .diff-append { color: #e69944 !important; font-weight: bold; }
     .diff-hard   { color: #44a9e6 !important; font-weight: bold; }
 
-    /* ========== モーダル（トーナメント表表示用） ========== */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background-color: rgba(0, 0, 0, 0.6);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(3px);
-    }
-    .modal-content {
-      background-color: #ffffff;
-      width: 90%;
-      max-width: 1600px;
-      height: 85%;
-      border-radius: 12px;
-      padding: 20px;
+    /* ========== 全画面トーナメント表エリア ========== */
+    .full-tournament-container {
+      width: 100%;
+      height: calc(100vh - 180px);
       display: flex;
       flex-direction: column;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 15px;
-      border-bottom: 2px solid #f0f0f0;
-      padding-bottom: 10px;
     }
-    .modal-title {
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #0066cc;
-      margin: 0;
-    }
-    .btn-close {
-      background-color: #e0e0e0;
-      color: #333;
-      border: none;
-      padding: 8px 20px;
-      font-size: 1rem;
-      font-weight: bold;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-close:hover { background-color: #cccccc; }
-    .iframe-container {
-      flex-grow: 1;
+    .full-tournament-iframe {
       width: 100%;
+      height: 100%;
       border: 1px solid #d0d7de;
-      border-radius: 8px;
-      overflow: hidden;
-      background-color: #ffffff;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }
-    iframe { width: 100%; height: 100%; border: none; }
   </style>
 </head>
 <body>
 
   <div class="container">
     <div class="breadcrumb" id="breadcrumb"></div>
-    <div id="view-area" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
-  </div>
-
-  <!-- トーナメント表表示用モーダル -->
-  <div class="modal-overlay" id="tournament-modal" onclick="closeTournamentModalOnBg(event)">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title" id="modal-title-text">トーナメント表</h2>
-        <button class="btn-close" onclick="closeTournamentModal()">閉じる ✖</button>
-      </div>
-      <div class="iframe-container">
-        <iframe id="tournament-iframe" src=""></iframe>
-      </div>
-    </div>
+    <div id="view-area" style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center;"></div>
   </div>
 
   <script>
@@ -250,27 +195,6 @@
     let currentDept = null, currentRound = null, currentMatch = null, currentSongTab = null;
     let animStep = 0;
 
-    // モーダル制御関数
-    function openTournamentModal(dept) {
-      const url = TOURNAMENT_URLS[dept];
-      if (!url) return;
-      document.getElementById('modal-title-text').innerText = `${dept}部門 トーナメント表`;
-      document.getElementById('tournament-iframe').src = url;
-      document.getElementById('tournament-modal').style.display = 'flex';
-    }
-
-    function closeTournamentModal() {
-      document.getElementById('tournament-modal').style.display = 'none';
-      document.getElementById('tournament-iframe').src = '';
-    }
-
-    function closeTournamentModalOnBg(e) {
-      if (e.target.id === 'tournament-modal') {
-        closeTournamentModal();
-      }
-    }
-
-    // 文字列内に含まれる難易度キーワードを色付け用のスパンで置換する関数
     function formatSongName(name) {
       if (!name) return "";
       return name
@@ -414,7 +338,6 @@
       return rankMap;
     }
 
-    // 順位表示文字列および表示色のクラスを決定する関数
     function getRankInfo(dept, round, rank) {
       if (rank === "-") return { str: "-", colorClass: "color-black" };
       
@@ -470,7 +393,13 @@
       const nav = document.getElementById('breadcrumb');
       let html = `<span class="breadcrumb-item" onclick="navTo('dept')">TOP (部門選択)</span>`;
       if (currentDept) html += ` ＞ ` + (currentRound ? `<span class="breadcrumb-item" onclick="navTo('round')">${currentDept}</span>` : `<span class="breadcrumb-current">${currentDept}</span>`);
-      if (currentRound) html += ` ＞ ` + (currentMatch ? `<span class="breadcrumb-item" onclick="navTo('match')">${currentRound}</span>` : `<span class="breadcrumb-current">${currentRound}</span>`);
+      if (currentRound) {
+        if (currentRound === 'TOURNAMENT') {
+          html += ` ＞ <span class="breadcrumb-current">トーナメント表</span>`;
+        } else {
+          html += ` ＞ ` + (currentMatch ? `<span class="breadcrumb-item" onclick="navTo('match')">${currentRound}</span>` : `<span class="breadcrumb-current">${currentRound}</span>`);
+        }
+      }
       if (currentMatch) {
         const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
         html += ` ＞ ` + (currentSongTab !== null ? `<span class="breadcrumb-item" onclick="navTo('song')">${matchLabel}</span>` : `<span class="breadcrumb-current">${matchLabel}</span>`);
@@ -506,14 +435,27 @@
         
         let roundCardsHTML = rounds.map(r => `<div class="selection-card" onclick="selectRound('${r}')">${r}<div class="sub">クリックして決定</div></div>`).join('');
         
-        // トーナメント表ボタンをラウンド選択に追加
+        // トーナメント表ボタンをカードに追加（クリックで全画面表示モードへ）
         if (TOURNAMENT_URLS[currentDept]) {
-          roundCardsHTML += `<div class="selection-card gold-card" onclick="openTournamentModal('${currentDept}')">トーナメント表<div class="sub">進行状況を確認</div></div>`;
+          roundCardsHTML += `<div class="selection-card gold-card" onclick="selectRound('TOURNAMENT')">トーナメント表<div class="sub">全画面で確認</div></div>`;
         }
 
         view.innerHTML = `<h1>ラウンドを選択してください</h1><p class="subtitle">【${currentDept}部門】のラウンドを選択してください</p>
           <div class="card-grid">${roundCardsHTML}</div>
           <button class="btn-back" onclick="navTo('dept')">← 部門選択に戻る</button>`;
+        return;
+      }
+
+      // ★ 全画面トーナメント表表示
+      if (currentRound === 'TOURNAMENT') {
+        const url = TOURNAMENT_URLS[currentDept];
+        view.innerHTML = `
+          <h1>${currentDept}部門 トーナメント表</h1>
+          <div class="full-tournament-container">
+            <iframe class="full-tournament-iframe" src="${url}"></iframe>
+          </div>
+          <button class="btn-back" onclick="navTo('round')">← ラウンド選択に戻る</button>
+        `;
         return;
       }
 
@@ -798,10 +740,10 @@
         const getCellData = (c, key) => (c.data && c.data[key] !== undefined) ? parseInt(c.data[key], 10).toLocaleString() : '-';
 
         let pRow = `<tr><td class="row-header"><span class="p-perfect">PERFECT</span></td>` + columns.map(c => `<td><span class="anim-target p-perfect" data-anim-step="1">${getCellData(c, 'p')}</span></td>`).join('') + `</tr>`;
-        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + columns.map(c => `<td class="p-great"><span class="anim-target" data-anim-step="2">${getCellData(c, 'g')}</span></td>`).join('') + `</tr>`;
-        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + columns.map(c => `<td class="p-good"><span class="anim-target" data-anim-step="3">${getCellData(c, 'gd')}</span></td>`).join('') + `</tr>`;
-        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + columns.map(c => `<td class="p-bad"><span class="anim-target" data-anim-step="4">${getCellData(c, 'b')}</span></td>`).join('') + `</tr>`;
-        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + columns.map(c => `<td class="p-miss"><span class="anim-target" data-anim-step="5">${getCellData(c, 'm')}</span></td>`).join('') + `</tr>`;
+        let gRow = `<tr><td class="row-header p-great">GREAT</span></td>` + columns.map(c => `<td class="p-great"><span class="anim-target" data-anim-step="2">${getCellData(c, 'g')}</span></td>`).join('') + `</tr>`;
+        let gdRow = `<tr><td class="row-header p-good">GOOD</span></td>` + columns.map(c => `<td class="p-good"><span class="anim-target" data-anim-step="3">${getCellData(c, 'gd')}</span></td>`).join('') + `</tr>`;
+        let bRow = `<tr><td class="row-header p-bad">BAD</span></td>` + columns.map(c => `<td class="p-bad"><span class="anim-target" data-anim-step="4">${getCellData(c, 'b')}</span></td>`).join('') + `</tr>`;
+        let mRow = `<tr><td class="row-header p-miss">MISS</span></td>` + columns.map(c => `<td class="p-miss"><span class="anim-target" data-anim-step="5">${getCellData(c, 'm')}</span></td>`).join('') + `</tr>`;
 
         let scoreRow = `<tr><td class="row-header" style="font-size:1.15rem; color:#006699;">SCORE</td>` + columns.map(c => {
           let cellContent = '-';
