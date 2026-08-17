@@ -149,6 +149,65 @@
     .diff-master { color: #a944e6 !important; font-weight: bold; }
     .diff-append { color: #e69944 !important; font-weight: bold; }
     .diff-hard   { color: #44a9e6 !important; font-weight: bold; }
+
+    /* ========== モーダル（トーナメント表表示用） ========== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(3px);
+    }
+    .modal-content {
+      background-color: #ffffff;
+      width: 90%;
+      max-width: 1600px;
+      height: 85%;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 10px;
+    }
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #0066cc;
+      margin: 0;
+    }
+    .btn-close {
+      background-color: #e0e0e0;
+      color: #333;
+      border: none;
+      padding: 8px 20px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-close:hover { background-color: #cccccc; }
+    .iframe-container {
+      flex-grow: 1;
+      width: 100%;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: #ffffff;
+    }
+    iframe { width: 100%; height: 100%; border: none; }
   </style>
 </head>
 <body>
@@ -156,6 +215,19 @@
   <div class="container">
     <div class="breadcrumb" id="breadcrumb"></div>
     <div id="view-area" style="width: 100%; display: flex; flex-direction: column; align-items: center;"></div>
+  </div>
+
+  <!-- トーナメント表表示用モーダル -->
+  <div class="modal-overlay" id="tournament-modal" onclick="closeTournamentModalOnBg(event)">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title-text">トーナメント表</h2>
+        <button class="btn-close" onclick="closeTournamentModal()">閉じる ✖</button>
+      </div>
+      <div class="iframe-container">
+        <iframe id="tournament-iframe" src=""></iframe>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -166,11 +238,37 @@
       "ULTIMATE": { "準々決勝": [1, 2], "準決勝": [1, 2], "決勝": [1] },
       "DOUBLES": { "準々決勝": [1, 2, 3, 4], "準決勝": [1, 2], "決勝": [1] }
     };
+    const TOURNAMENT_URLS = {
+      "STANDARD": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pubhtml?gid=0&single=true&widget=true&headers=false",
+      "NEXT": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pubhtml?gid=536635806&single=true&widget=true&headers=false",
+      "ULTIMATE": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pubhtml?gid=789723325&single=true&widget=true&headers=false",
+      "DOUBLES": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pubhtml?gid=1830506546&single=true&widget=true&headers=false"
+    };
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pub?gid=1560276695&single=true&output=csv"; 
 
     let treeData = {};
     let currentDept = null, currentRound = null, currentMatch = null, currentSongTab = null;
     let animStep = 0;
+
+    // モーダル制御関数
+    function openTournamentModal(dept) {
+      const url = TOURNAMENT_URLS[dept];
+      if (!url) return;
+      document.getElementById('modal-title-text').innerText = `${dept}部門 トーナメント表`;
+      document.getElementById('tournament-iframe').src = url;
+      document.getElementById('tournament-modal').style.display = 'flex';
+    }
+
+    function closeTournamentModal() {
+      document.getElementById('tournament-modal').style.display = 'none';
+      document.getElementById('tournament-iframe').src = '';
+    }
+
+    function closeTournamentModalOnBg(e) {
+      if (e.target.id === 'tournament-modal') {
+        closeTournamentModal();
+      }
+    }
 
     // 文字列内に含まれる難易度キーワードを色付け用のスパンで置換する関数
     function formatSongName(name) {
@@ -405,8 +503,16 @@
 
       if (!currentRound) {
         const rounds = Array.from(new Set([...(DEFAULT_STRUCTURE[currentDept] ? Object.keys(DEFAULT_STRUCTURE[currentDept]) : []), ...(treeData[currentDept] ? Object.keys(treeData[currentDept]) : [])]));
+        
+        let roundCardsHTML = rounds.map(r => `<div class="selection-card" onclick="selectRound('${r}')">${r}<div class="sub">クリックして決定</div></div>`).join('');
+        
+        // トーナメント表ボタンをラウンド選択に追加
+        if (TOURNAMENT_URLS[currentDept]) {
+          roundCardsHTML += `<div class="selection-card gold-card" onclick="openTournamentModal('${currentDept}')">トーナメント表<div class="sub">進行状況を確認</div></div>`;
+        }
+
         view.innerHTML = `<h1>ラウンドを選択してください</h1><p class="subtitle">【${currentDept}部門】のラウンドを選択してください</p>
-          <div class="card-grid">${rounds.map(r => `<div class="selection-card" onclick="selectRound('${r}')">${r}<div class="sub">クリックして決定</div></div>`).join('')}</div>
+          <div class="card-grid">${roundCardsHTML}</div>
           <button class="btn-back" onclick="navTo('dept')">← 部門選択に戻る</button>`;
         return;
       }
