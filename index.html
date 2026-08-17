@@ -17,7 +17,6 @@
       color: #333333;
     }
 
-    /* 全体的な余白を調整し、画面を広く使う */
     .container {
       width: 100%;
       height: 100%;
@@ -30,26 +29,25 @@
       justify-content: flex-start;
     }
 
-    /* フォントサイズを拡大 */
     .breadcrumb {
       display: flex; justify-content: center; align-items: center; gap: 10px;
-      margin-bottom: 30px; font-size: 1.5rem; color: #666666; /* 1.1rem -> 1.5rem */
+      margin-bottom: 30px; font-size: 1.5rem; color: #666666;
     }
     .breadcrumb-item { cursor: pointer; text-decoration: underline; color: #0066cc; }
     .breadcrumb-item:hover { color: #003399; }
     .breadcrumb-current { color: #111111; font-weight: bold; }
 
-    h1 { color: #111111; font-size: 3.2rem; margin: 0 0 15px 0; text-align: center; } /* 2.2rem -> 3.2rem */
-    p.subtitle { color: #666666; font-size: 1.6rem; margin: 0 0 40px 0; text-align: center; } /* 1.1rem -> 1.6rem */
+    h1 { color: #111111; font-size: 3.2rem; margin: 0 0 15px 0; text-align: center; }
+    p.subtitle { color: #666666; font-size: 1.6rem; margin: 0 0 40px 0; text-align: center; }
 
     .card-grid {
       display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
       gap: 30px; width: 100%; max-width: 1600px;
     }
     .selection-card {
-      width: 360px; height: 160px; background: #ffffff; /* カードサイズ拡大 */
+      width: 360px; height: 160px; background: #ffffff;
       border: 1px solid #d0d7de; border-radius: 12px;
-      font-size: 1.8rem; font-weight: bold; color: #111111; /* 1.4rem -> 1.8rem */
+      font-size: 1.8rem; font-weight: bold; color: #111111;
       cursor: pointer; transition: all 0.2s ease;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       box-shadow: 0 4px 10px rgba(0,0,0,0.04);
@@ -65,33 +63,31 @@
     .tab-container { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; }
     .tab-btn {
       background: #ffffff; border: 1px solid #cccccc; color: #333333;
-      padding: 15px 36px; border-radius: 8px; cursor: pointer; font-size: 1.5rem; transition: all 0.2s; /* ボタン拡大 */
+      padding: 15px 36px; border-radius: 8px; cursor: pointer; font-size: 1.5rem; transition: all 0.2s;
     }
     .tab-btn:hover { background: #e8f2ff; }
     .tab-btn.active { background: #0066cc; color: #ffffff; font-weight: bold; border-color: #0066cc; box-shadow: 0 3px 10px rgba(0, 102, 204, 0.3); }
 
     .song-title-banner {
-      font-size: 2.4rem; font-weight: bold; color: #111111; /* 1.8rem -> 2.4rem */
+      font-size: 2.4rem; font-weight: bold; color: #111111;
       margin-bottom: 25px; letter-spacing: 0.5px; text-align: center;
     }
 
-    /* テーブルのセル高さを大幅に広げる */
     .table-container {
       background: #ffffff; border-radius: 14px; border: 1px solid #e1e4e8;
-      overflow: hidden; width: 100%; max-width: 1700px; box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+      overflow: hidden; width: 100%; max-width: 1800px; box-shadow: 0 6px 20px rgba(0,0,0,0.06);
     }
-    table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; table-layout: fixed; }
-    th, td { padding: 24px 15px; font-size: 1.8rem; border-bottom: 1px solid #e1e4e8; border-right: 1px solid #f0f0f0; } /* paddingとfont-size拡大 */
+    /* table-layoutをautoにして列数に応じて自然な幅になるよう調整 */
+    table { width: 100%; border-collapse: collapse; text-align: center; white-space: nowrap; table-layout: auto; }
+    th, td { padding: 22px 15px; font-size: 1.8rem; border-bottom: 1px solid #e1e4e8; border-right: 1px solid #f0f0f0; }
     th:last-child, td:last-child { border-right: none; }
     
-    .row-header { background: #f8fafc; font-weight: bold; color: #004499; text-align: right; width: 280px; font-size: 1.8rem; } /* widthとfont-size拡大 */
-    .player-header { background: #e8f2ff; color: #004499; font-size: 2.0rem; font-weight: bold; } /* 1.3rem -> 2.0rem */
+    .row-header { background: #f8fafc; font-weight: bold; color: #004499; text-align: center; font-size: 1.8rem; }
+    .player-header { background: #e8f2ff; color: #004499; font-size: 2.0rem; font-weight: bold; }
 
-    /* DOUBLES専用カラー（青・橙） */
     .team-blue { background: #f0f7ff !important; color: #0055bb !important; border-bottom: 4px solid #0066cc !important; }
     .team-orange { background: #fff5f0 !important; color: #cc4400 !important; border-bottom: 4px solid #ff6600 !important; }
 
-    /* 水色〜ピンク 文字内グラデーション判定 */
     .p-perfect {
       background: linear-gradient(135deg, #00c6ff 0%, #0072ff 30%, #ff007f 100%);
       -webkit-background-clip: text;
@@ -106,10 +102,9 @@
     .p-bad { color: #dd6600; font-weight: bold; font-size: 1.8rem; }
     .p-miss { color: #555555; font-weight: bold; font-size: 1.8rem; }
 
-    .score { font-family: monospace; font-size: 2.4rem; color: #006699; font-weight: bold; } /* 1.5rem -> 2.4rem */
-    .sub-score { font-family: monospace; font-size: 1.8rem; color: #333333; } /* 1.25rem -> 1.8rem */
+    .score { font-family: monospace; font-size: 2.4rem; color: #006699; font-weight: bold; }
+    .sub-score { font-family: monospace; font-size: 1.8rem; color: #333333; }
     
-    /* 各種スコア強調表示スタイル（大幅拡大） */
     .score-gold { font-size: 2.8rem !important; color: #d4a000 !important; font-weight: 900 !important; text-shadow: 0 0 10px rgba(212, 160, 0, 0.3); transform: scale(1.08); display: inline-block; }
     .score-silver { font-size: 2.6rem !important; color: #a0a0a0 !important; font-weight: 900 !important; text-shadow: 0 0 8px rgba(160, 160, 160, 0.3); transform: scale(1.06); display: inline-block; }
     .score-bronze { font-size: 2.5rem !important; color: #b87333 !important; font-weight: 900 !important; text-shadow: 0 0 6px rgba(184, 115, 51, 0.3); transform: scale(1.04); display: inline-block; }
@@ -142,21 +137,6 @@
     .diff-master { color: #a944e6 !important; font-weight: bold; }
     .diff-append { color: #e69944 !important; font-weight: bold; }
     .diff-hard   { color: #44a9e6 !important; font-weight: bold; }
-
-    /* ========== 全画面トーナメント表エリア ========== */
-    .full-tournament-container {
-      width: 100%;
-      height: calc(100vh - 220px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .full-tournament-iframe {
-      width: 100%;
-      height: 100%;
-      border: none; /* 枠線を削除 */
-      background: transparent; /* 背景を透明に */
-    }
   </style>
 </head>
 <body>
@@ -175,13 +155,6 @@
       "DOUBLES": { "準々決勝": [1, 2, 3, 4], "準決勝": [1, 2], "決勝": [1] }
     };
     
-    /* widget=false & chrome=false を付与し、画像で指摘された不要なUIを削除 */
-    const TOURNAMENT_URLS = {
-      "STANDARD": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pubhtml?gid=0&single=true&widget=false&chrome=false&headers=false",
-      "NEXT": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pubhtml?gid=536635806&single=true&widget=false&chrome=false&headers=false",
-      "ULTIMATE": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pubhtml?gid=789723325&single=true&widget=false&chrome=false&headers=false",
-      "DOUBLES": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pubhtml?gid=1830506546&single=true&widget=false&chrome=false&headers=false"
-    };
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJ9mquQm_J8GBgOq2Qj_aHNJGLbCZTgIU4uK_GH0bjRSYwHbQ6xKLyATkmaTeNX3_6pqzy7XmHmowm/pub?gid=1560276695&single=true&output=csv"; 
 
     let treeData = {};
@@ -209,29 +182,32 @@
 
       if (currentSongTab === 'final') {
         if (!isDoubles) {
-          const targets = document.querySelectorAll(`[data-anim-step="${animStep}"]`);
-          targets.forEach(el => el.classList.add('anim-visible'));
+          // シングル: Step1(1曲目) -> Step2(2曲目) -> Step3(3曲目) -> Step4(合計)
+          document.querySelectorAll(`[data-anim-step="${animStep}"]`).forEach(el => el.classList.add('anim-visible'));
         } else {
-          if (animStep === 1) {
-            for (let step = 1; step <= 5; step++) {
+          // ダブルス: Step1〜3(曲ごと) -> Step4(判定P〜M一斉表示) -> Step5(合計)
+          if (animStep <= 3) {
+            document.querySelectorAll(`[data-anim-step="${animStep}"]`).forEach(el => el.classList.add('anim-visible'));
+          } else if (animStep === 4) {
+            [4, 5, 6, 7, 8].forEach((step, idx) => {
               setTimeout(() => {
                 document.querySelectorAll(`[data-anim-step="${step}"]`).forEach(el => el.classList.add('anim-visible'));
-              }, (step - 1) * 100);
-            }
-          } else if (animStep === 2) {
-            document.querySelectorAll(`[data-anim-step="6"]`).forEach(el => el.classList.add('anim-visible'));
+              }, idx * 100);
+            });
+          } else if (animStep === 5) {
+            document.querySelectorAll(`[data-anim-step="9"]`).forEach(el => el.classList.add('anim-visible'));
           }
         }
       } else {
+        // 1〜3曲目: Step1(判定P〜M一斉表示) -> Step2(スコア)
         if (animStep === 1) {
-          for (let step = 1; step <= 5; step++) {
+          [1, 2, 3, 4, 5].forEach((step, idx) => {
             setTimeout(() => {
               document.querySelectorAll(`[data-anim-step="${step}"]`).forEach(el => el.classList.add('anim-visible'));
-            }, (step - 1) * 120);
-          }
+            }, idx * 100);
+          });
         } else if (animStep === 2) {
           document.querySelectorAll(`[data-anim-step="6"]`).forEach(el => el.classList.add('anim-visible'));
-          document.querySelectorAll(`[data-anim-step="7"]`).forEach(el => el.classList.add('anim-visible'));
         }
       }
     }
@@ -386,13 +362,7 @@
       const nav = document.getElementById('breadcrumb');
       let html = `<span class="breadcrumb-item" onclick="navTo('dept')">TOP (部門選択)</span>`;
       if (currentDept) html += ` ＞ ` + (currentRound ? `<span class="breadcrumb-item" onclick="navTo('round')">${currentDept}</span>` : `<span class="breadcrumb-current">${currentDept}</span>`);
-      if (currentRound) {
-        if (currentRound === 'TOURNAMENT') {
-          html += ` ＞ <span class="breadcrumb-current">トーナメント表</span>`;
-        } else {
-          html += ` ＞ ` + (currentMatch ? `<span class="breadcrumb-item" onclick="navTo('match')">${currentRound}</span>` : `<span class="breadcrumb-current">${currentRound}</span>`);
-        }
-      }
+      if (currentRound) html += ` ＞ ` + (currentMatch ? `<span class="breadcrumb-item" onclick="navTo('match')">${currentRound}</span>` : `<span class="breadcrumb-current">${currentRound}</span>`);
       if (currentMatch) {
         const matchLabel = getMatchDisplayName(currentDept, currentRound, currentMatch);
         html += ` ＞ ` + (currentSongTab !== null ? `<span class="breadcrumb-item" onclick="navTo('song')">${matchLabel}</span>` : `<span class="breadcrumb-current">${matchLabel}</span>`);
@@ -425,29 +395,9 @@
 
       if (!currentRound) {
         const rounds = Array.from(new Set([...(DEFAULT_STRUCTURE[currentDept] ? Object.keys(DEFAULT_STRUCTURE[currentDept]) : []), ...(treeData[currentDept] ? Object.keys(treeData[currentDept]) : [])]));
-        
-        let roundCardsHTML = rounds.map(r => `<div class="selection-card" onclick="selectRound('${r}')">${r}<div class="sub">クリックして決定</div></div>`).join('');
-        
-        if (TOURNAMENT_URLS[currentDept]) {
-          roundCardsHTML += `<div class="selection-card gold-card" onclick="selectRound('TOURNAMENT')">トーナメント表<div class="sub">全画面で確認</div></div>`;
-        }
-
         view.innerHTML = `<h1>ラウンドを選択してください</h1><p class="subtitle">【${currentDept}部門】のラウンドを選択してください</p>
-          <div class="card-grid">${roundCardsHTML}</div>
+          <div class="card-grid">${rounds.map(r => `<div class="selection-card" onclick="selectRound('${r}')">${r}<div class="sub">クリックして決定</div></div>`).join('')}</div>
           <button class="btn-back" onclick="navTo('dept')">← 部門選択に戻る</button>`;
-        return;
-      }
-
-      // ★ 全画面トーナメント表表示
-      if (currentRound === 'TOURNAMENT') {
-        const url = TOURNAMENT_URLS[currentDept];
-        view.innerHTML = `
-          <h1>${currentDept}部門 トーナメント表</h1>
-          <div class="full-tournament-container">
-            <iframe class="full-tournament-iframe" src="${url}"></iframe>
-          </div>
-          <button class="btn-back" onclick="navTo('round')">← ラウンド選択に戻る</button>
-        `;
         return;
       }
 
@@ -522,11 +472,8 @@
             let assignedTeam = "";
 
             if (teamOrder.length >= 2) {
-              if (sNum === "1" || sNum === "2") {
-                assignedTeam = teamOrder[rowIdxBySong[sNum] % teamOrder.length];
-              } else if (sNum === "3") {
-                assignedTeam = teamOrder[Math.floor(rowIdxBySong[sNum] / 2) % teamOrder.length];
-              }
+              if (sNum === "1" || sNum === "2") assignedTeam = teamOrder[rowIdxBySong[sNum] % teamOrder.length];
+              else if (sNum === "3") assignedTeam = teamOrder[Math.floor(rowIdxBySong[sNum] / 2) % teamOrder.length];
               rowIdxBySong[sNum]++;
             } else {
               assignedTeam = r.name;
@@ -552,9 +499,6 @@
               sd.b += (parseInt(r.b, 10) || 0);
               sd.m += (parseInt(r.m, 10) || 0);
               sd.score += r.score;
-
-              tObj.members[r.name] = tObj.members[r.name] || {};
-              tObj.members[r.name][sNum] = { p: r.p, g: r.g, gd: r.gd, b: r.b, m: r.m, score: r.score, flg: r.flg };
             }
           }
         });
@@ -582,7 +526,7 @@
       let tableHTML = "";
       let titleBannerHTML = "";
 
-      /* ===== 最終結果表示 ===== */
+      /* ===== 最終結果表示（プレイヤーが縦・曲が横） ===== */
       if (currentSongTab === 'final') {
         titleBannerHTML = `<div class="song-title-banner">最終結果</div>`;
 
@@ -590,15 +534,8 @@
         const maxScore = Math.max(...allTotals);
         const finalRankMap = getRankMap(allTotals);
 
-        let headerRow = `<tr><th class="row-header"></th>` +
-          teamOrder.map((name, idx) => {
-            const colorClass = isDoubles ? ((idx === 0) ? 'team-blue' : 'team-orange') : '';
-            return `<th class="player-header ${colorClass}">${name}</th>`;
-          }).join('') + `</tr>`;
-
-        let songRows = "";
+        const songMaxScores = {};
         if (!isDoubles) {
-          const songMaxScores = {};
           songNums.forEach(num => {
             let maxS = -1;
             teamOrder.forEach(n => {
@@ -607,40 +544,47 @@
             });
             songMaxScores[num] = maxS;
           });
-
-          songRows = songNums.map((num, idx) => {
-            const sName = songMap[num] ? `<br><small style="font-weight:normal; color:#555; font-size: 1.4rem;">（${formatSongName(songMap[num])}）</small>` : '';
-            let row = `<tr><td class="row-header">${num}曲目${sName}</td>`;
-            teamOrder.forEach(n => {
-              const sScore = teamData[n].songs[num] !== undefined ? teamData[n].songs[num] : 0;
-              const sFlg = teamData[n].flgs[num] || "";
-              
-              let sClass = "";
-              if (sScore > 0 && sScore === songMaxScores[num]) {
-                sClass = "score-mild-top";
-              }
-              
-              const cellContent = teamData[n].songs[num] !== undefined ? renderScoreCell(sScore, sFlg, sClass, true) : '-';
-              row += `<td class="sub-score"><span class="anim-target" data-anim-step="${idx + 1}">${cellContent}</span></td>`;
-            });
-            return row + `</tr>`;
-          }).join('');
         }
 
-        let summaryRows = "";
+        // ヘッダー生成
+        let headerRow = `<tr><th class="row-header" style="width:250px;">${isDoubles ? 'チーム' : 'プレイヤー'}</th>`;
+        songNums.forEach(num => {
+          const sName = songMap[num] ? `<br><small style="font-weight:normal; color:#555; font-size: 1.3rem;">（${formatSongName(songMap[num])}）</small>` : '';
+          headerRow += `<th class="player-header">${num}曲目${sName}</th>`;
+        });
         if (isDoubles) {
-          const getVal = (n, key) => (csvFinalRows[n] ? csvFinalRows[n][key] : teamData[n][key]).toLocaleString();
-          summaryRows += `<tr><td class="row-header"><span class="p-perfect">PERFECT 合計</span></td>` + teamOrder.map(n => `<td><span class="anim-target p-perfect" data-anim-step="1">${getVal(n, 'p')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + teamOrder.map(n => `<td class="p-great"><span class="anim-target" data-anim-step="2">${getVal(n, 'g')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + teamOrder.map(n => `<td class="p-good"><span class="anim-target" data-anim-step="3">${getVal(n, 'gd')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + teamOrder.map(n => `<td class="p-bad"><span class="anim-target" data-anim-step="4">${getVal(n, 'b')}</span></td>`).join('') + `</tr>`;
-          summaryRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + teamOrder.map(n => `<td class="p-miss"><span class="anim-target" data-anim-step="5">${getVal(n, 'm')}</span></td>`).join('') + `</tr>`;
+          headerRow += `<th class="player-header p-perfect" style="font-size:1.6rem; padding: 22px 5px;">PERFECT</th>
+                        <th class="player-header p-great" style="font-size:1.6rem; padding: 22px 5px;">GREAT</th>
+                        <th class="player-header p-good" style="font-size:1.6rem; padding: 22px 5px;">GOOD</th>
+                        <th class="player-header p-bad" style="font-size:1.6rem; padding: 22px 5px;">BAD</th>
+                        <th class="player-header p-miss" style="font-size:1.6rem; padding: 22px 5px;">MISS</th>`;
         }
+        headerRow += `<th class="player-header" style="width:280px;">合計得点</th></tr>`;
 
-        let totalStep = isDoubles ? 6 : 4;
-        let totalRow = `<tr><td class="row-header" style="font-size:2.0rem; color:#006699;">合計得点</td>` + teamOrder.map(n => {
-          const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
+        // データ行生成
+        let bodyRows = teamOrder.map((n, idx) => {
+          const colorClass = isDoubles ? ((idx === 0) ? 'team-blue' : 'team-orange') : '';
+          let row = `<tr><td class="row-header ${colorClass}">${n}</td>`;
           
+          songNums.forEach((num, sIdx) => {
+            const sScore = teamData[n].songs[num] !== undefined ? teamData[n].songs[num] : 0;
+            const sFlg = teamData[n].flgs[num] || "";
+            let sClass = "";
+            if (!isDoubles && sScore > 0 && sScore === songMaxScores[num]) sClass = "score-mild-top";
+            const cellContent = teamData[n].songs[num] !== undefined ? renderScoreCell(sScore, sFlg, sClass, true) : '-';
+            row += `<td class="sub-score"><span class="anim-target" data-anim-step="${sIdx + 1}">${cellContent}</span></td>`;
+          });
+
+          if (isDoubles) {
+            const getVal = key => (csvFinalRows[n] ? csvFinalRows[n][key] : teamData[n][key]).toLocaleString();
+            row += `<td><span class="anim-target p-perfect" data-anim-step="4">${getVal('p')}</span></td>`;
+            row += `<td><span class="anim-target p-great" data-anim-step="5">${getVal('g')}</span></td>`;
+            row += `<td><span class="anim-target p-good" data-anim-step="6">${getVal('gd')}</span></td>`;
+            row += `<td><span class="anim-target p-bad" data-anim-step="7">${getVal('b')}</span></td>`;
+            row += `<td><span class="anim-target p-miss" data-anim-step="8">${getVal('m')}</span></td>`;
+          }
+
+          const finalScore = csvFinalRows[n] ? csvFinalRows[n].score : teamData[n].total;
           let sClass = "";
           if (isDoubles) {
             if (finalScore === maxScore && maxScore > 0) sClass = "score-gold";
@@ -653,60 +597,52 @@
             else if (rInfo.colorClass === "color-red") sClass = "score-red";
           }
           
-          return `<td class="score"><span class="anim-target" data-anim-step="${totalStep}">${renderScoreCell(finalScore, "", sClass, false)}</span></td>`;
-        }).join('') + `</tr>`;
+          const totalStep = isDoubles ? 9 : 4;
+          row += `<td class="score"><span class="anim-target" data-anim-step="${totalStep}">${renderScoreCell(finalScore, "", sClass, false)}</span></td></tr>`;
+          return row;
+        }).join('');
 
-        tableHTML = `<table><thead>${headerRow}</thead><tbody>${songRows}${summaryRows}${totalRow}</tbody></table>`;
+        tableHTML = `<table><thead>${headerRow}</thead><tbody>${bodyRows}</tbody></table>`;
       
-      /* ===== 1〜3曲目 単曲結果表示 ===== */
+      /* ===== 1〜3曲目 単曲結果表示（プレイヤーが横・判定が縦） ===== */
       } else {
         const sNum = currentSongTab;
         const sName = songMap[sNum] ? formatSongName(songMap[sNum]) : "";
         titleBannerHTML = `<div class="song-title-banner">${sNum}曲目: ${sName}</div>`;
 
-        let headerRow = `<tr>
-          <th class="row-header">プレイヤー</th>
-          <th class="player-header">PERFECT</th>
-          <th class="player-header">GREAT</th>
-          <th class="player-header">GOOD</th>
-          <th class="player-header">BAD</th>
-          <th class="player-header">MISS</th>
-          <th class="player-header" style="width:300px;">スコア</th>
-        </tr>`;
+        let headerRow = `<tr><th class="row-header" style="width: 250px;"></th>` +
+          teamOrder.map((n, idx) => {
+            const colorClass = isDoubles ? ((idx === 0) ? 'team-blue' : 'team-orange') : '';
+            return `<th class="player-header ${colorClass}">${n}</th>`;
+          }).join('') + `</tr>`;
         
         let bodyRows = "";
         
-        if (isDoubles) {
-           teamOrder.forEach((tName, idx) => {
-              const tObj = teamData[tName];
-              const sd = tObj.songDetails[sNum];
-              if (!sd) return;
-              const colorClass = (idx === 0) ? 'team-blue' : 'team-orange';
-              bodyRows += `<tr>
-                <td class="row-header ${colorClass}">${tName}</td>
-                <td><span class="anim-target p-perfect" data-anim-step="1">${sd.p.toLocaleString()}</span></td>
-                <td><span class="anim-target p-great" data-anim-step="2">${sd.g.toLocaleString()}</span></td>
-                <td><span class="anim-target p-good" data-anim-step="3">${sd.gd.toLocaleString()}</span></td>
-                <td><span class="anim-target p-bad" data-anim-step="4">${sd.b.toLocaleString()}</span></td>
-                <td><span class="anim-target p-miss" data-anim-step="5">${sd.m.toLocaleString()}</span></td>
-                <td class="score"><span class="anim-target" data-anim-step="6">${renderScoreCell(sd.score, sd.flg)}</span></td>
-              </tr>`;
-           });
-        } else {
-           teamOrder.forEach((n) => {
-              const r = teamData[n].songDetails[sNum];
-              if (!r) return;
-              bodyRows += `<tr>
-                <td class="row-header">${n}</td>
-                <td><span class="anim-target p-perfect" data-anim-step="1">${(parseInt(r.p)||0).toLocaleString()}</span></td>
-                <td><span class="anim-target p-great" data-anim-step="2">${(parseInt(r.g)||0).toLocaleString()}</span></td>
-                <td><span class="anim-target p-good" data-anim-step="3">${(parseInt(r.gd)||0).toLocaleString()}</span></td>
-                <td><span class="anim-target p-bad" data-anim-step="4">${(parseInt(r.b)||0).toLocaleString()}</span></td>
-                <td><span class="anim-target p-miss" data-anim-step="5">${(parseInt(r.m)||0).toLocaleString()}</span></td>
-                <td class="score"><span class="anim-target" data-anim-step="6">${renderScoreCell(r.score, r.flg)}</span></td>
-              </tr>`;
-           });
-        }
+        const renderStatRow = (label, statKey, stepNum, cssClass = "") => {
+          let row = `<tr><td class="row-header ${cssClass}">${label}</td>`;
+          teamOrder.forEach(n => {
+            const sd = teamData[n].songDetails[sNum];
+            const val = sd ? (parseInt(sd[statKey])||0).toLocaleString() : "-";
+            row += `<td class="${cssClass}"><span class="anim-target" data-anim-step="${stepNum}">${val}</span></td>`;
+          });
+          return row + `</tr>`;
+        };
+
+        bodyRows += renderStatRow('<span class="p-perfect">PERFECT</span>', 'p', 1, 'p-perfect');
+        bodyRows += renderStatRow('GREAT', 'g', 2, 'p-great');
+        bodyRows += renderStatRow('GOOD', 'gd', 3, 'p-good');
+        bodyRows += renderStatRow('BAD', 'b', 4, 'p-bad');
+        bodyRows += renderStatRow('MISS', 'm', 5, 'p-miss');
+
+        // スコア行
+        bodyRows += `<tr><td class="row-header" style="font-size:2.0rem; color:#006699;">スコア</td>`;
+        teamOrder.forEach(n => {
+          const sd = teamData[n].songDetails[sNum];
+          const cell = sd ? renderScoreCell(sd.score, sd.flg) : "-";
+          bodyRows += `<td class="score"><span class="anim-target" data-anim-step="6">${cell}</span></td>`;
+        });
+        bodyRows += `</tr>`;
+
         tableHTML = `<table><thead>${headerRow}</thead><tbody>${bodyRows}</tbody></table>`;
       }
 
