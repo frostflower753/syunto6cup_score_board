@@ -102,7 +102,7 @@
     .sub-score { font-family: monospace; font-size: 1.35rem; color: #333333; }
     .score-gold { font-size: 2rem !important; color: #d4a000 !important; font-weight: 900 !important; text-shadow: 0 0 12px rgba(212, 160, 0, 0.35); transform: scale(1.08); display: inline-block; }
 
-    /* 順位バッジの装飾（日本語表記） */
+    /* 順位バッジ */
     .rank-badge { font-weight: 900; font-size: 1.3rem; padding: 4px 16px; border-radius: 8px; display: inline-block; }
     .rank-1 { background: #fff3c4; color: #b88600; border: 1px solid #e6b800; }
     .rank-2 { background: #f0f0f0; color: #555555; border: 1px solid #cccccc; }
@@ -114,18 +114,16 @@
     .badge-ap { background: linear-gradient(135deg, #00c6ff 0%, #ff007f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .badge-fc { color: #d0006f; }
 
+    /* 難易度カラー定義 */
     .diff-expert { color: #ff0000 !important; font-weight: bold; }
     .diff-master { color: #9b51e0 !important; font-weight: bold; }
     .diff-append { background: linear-gradient(135deg, #c896ff 0%, #ff96d5 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; display: inline-block; }
     .diff-hard   { color: #44a9e6 !important; font-weight: bold; }
 
-    /* =========================================
-       アニメーション用CSS
-    ========================================= */
-    @keyframes dropIn { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
+    /* アニメーション要素の制御 */
     .anim-target { display: inline-block; }
     .anim-hidden { opacity: 0; visibility: hidden; }
-    .anim-visible { animation: dropIn 0.3s ease forwards; visibility: visible; }
+    .anim-visible { opacity: 1; visibility: visible; transition: opacity 0.2s ease; }
   </style>
 </head>
 <body>
@@ -164,28 +162,11 @@
 
     function triggerAnimation() {
       animStep++;
-      if (currentSongTab === 'final') {
-        document.querySelectorAll(`[data-anim-step="${animStep}"]`).forEach(el => {
-          el.classList.remove('anim-hidden');
-          el.classList.add('anim-visible');
-        });
-      } else {
-        if (animStep === 1) {
-          for (let step = 1; step <= 5; step++) {
-            setTimeout(() => {
-              document.querySelectorAll(`[data-anim-step="${step}"]`).forEach(el => {
-                el.classList.remove('anim-hidden');
-                el.classList.add('anim-visible');
-              });
-            }, (step - 1) * 100);
-          }
-        } else if (animStep === 2) {
-          document.querySelectorAll(`[data-anim-step="6"]`).forEach(el => {
-            el.classList.remove('anim-hidden');
-            el.classList.add('anim-visible');
-          });
-        }
-      }
+      // 画面上の対象ステップの要素だけを可視化（不要な上書きを防ぐ）
+      document.querySelectorAll(`[data-anim-step="${animStep}"]`).forEach(el => {
+        el.classList.remove('anim-hidden');
+        el.classList.add('anim-visible');
+      });
     }
 
     async function fetchCSV() {
@@ -197,7 +178,10 @@
       } catch (err) {
         console.error("CSV fetch error:", err);
       }
-      render(true);
+      // ユーザーがEnterを押して進行している途中は画面リフレッシュを防止する
+      if (animStep === 0) {
+        render(true);
+      }
     }
 
     function parseCSV(text) {
@@ -390,7 +374,6 @@
 
         const maxScore = Math.max(...participants.map(p => p.score), 0);
 
-        // 順位付け（同点考慮）
         const sortedScores = Array.from(new Set(participants.map(p => p.score))).sort((a,b) => b - a);
         participants.forEach(p => {
           p.rank = sortedScores.indexOf(p.score) + 1;
@@ -433,7 +416,6 @@
           return `<td class="score"><span class="${getAnimClass(finalStep)}" data-anim-step="${finalStep}">${renderScoreCell(p.score, "", sClass, false)}</span></td>`;
         }).join('') + `</tr>`;
 
-        // ★「1位」「2位」「3位」…の日本語表記に変更
         let rankRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#111;">順位</td>` + participants.map(p => {
           let badgeClass = p.rank === 1 ? 'rank-1' : (p.rank === 2 ? 'rank-2' : (p.rank === 3 ? 'rank-3' : 'rank-other'));
           return `<td><span class="${getAnimClass(finalStep)}" data-anim-step="${finalStep}"><span class="rank-badge ${badgeClass}">${p.rank}位</span></span></td>`;
@@ -442,6 +424,7 @@
         tableHTML = `<thead>${headerRow}</thead><tbody>${bodyRows}${totalRow}${rankRow}</tbody>`;
 
       } else {
+        // --- 各曲目（単曲表示）のアニメーション制御 ---
         const rawSongName = songMap[currentSongTab];
         const songNameStr = rawSongName ? formatSongName(rawSongName) : "";
         titleBannerHTML = `<div class="song-title-banner">${currentSongTab}曲目${songNameStr ? ` : ${songNameStr}` : ''}</div>`;
@@ -462,14 +445,16 @@
 
         const parseVal = (v) => { const n = parseInt(v, 10); return isNaN(n) ? "0" : n.toLocaleString(); };
 
+        // ステップ1: PERFECT〜MISSのすべての内訳数値を一括表示
         let pRow = `<tr><td class="row-header"><span class="p-perfect">PERFECT</span></td>` + playersData.map(r => `<td><span class="${getAnimClass(1)} p-perfect" data-anim-step="1">${parseVal(r.p)}</span></td>`).join('') + `</tr>`;
-        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + playersData.map(r => `<td class="p-great"><span class="${getAnimClass(2)}" data-anim-step="2">${parseVal(r.g)}</span></td>`).join('') + `</tr>`;
-        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + playersData.map(r => `<td class="p-good"><span class="${getAnimClass(3)}" data-anim-step="3">${parseVal(r.gd)}</span></td>`).join('') + `</tr>`;
-        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + playersData.map(r => `<td class="p-bad"><span class="${getAnimClass(4)}" data-anim-step="4">${parseVal(r.b)}</span></td>`).join('') + `</tr>`;
-        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + playersData.map(r => `<td class="p-miss"><span class="${getAnimClass(5)}" data-anim-step="5">${parseVal(r.m)}</span></td>`).join('') + `</tr>`;
+        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + playersData.map(r => `<td class="p-great"><span class="${getAnimClass(1)}" data-anim-step="1">${parseVal(r.g)}</span></td>`).join('') + `</tr>`;
+        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + playersData.map(r => `<td class="p-good"><span class="${getAnimClass(1)}" data-anim-step="1">${parseVal(r.gd)}</span></td>`).join('') + `</tr>`;
+        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + playersData.map(r => `<td class="p-bad"><span class="${getAnimClass(1)}" data-anim-step="1">${parseVal(r.b)}</span></td>`).join('') + `</tr>`;
+        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + playersData.map(r => `<td class="p-miss"><span class="${getAnimClass(1)}" data-anim-step="1">${parseVal(r.m)}</span></td>`).join('') + `</tr>`;
 
+        // ステップ2: SCOREを表示
         let scoreRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">SCORE</td>` + playersData.map(r => {
-          return `<td class="score"><span class="${getAnimClass(6)}" data-anim-step="6">${renderScoreCell(r.score, r.flg, "", true)}</span></td>`;
+          return `<td class="score"><span class="${getAnimClass(2)}" data-anim-step="2">${renderScoreCell(r.score, r.flg, "", true)}</span></td>`;
         }).join('') + `</tr>`;
 
         tableHTML = `<thead>${headerRow}</thead><tbody>${pRow}${gRow}${gdRow}${bRow}${mRow}${scoreRow}</tbody>`;
