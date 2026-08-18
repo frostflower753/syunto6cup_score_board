@@ -84,11 +84,9 @@
     .row-header { background: #f8fafc; font-weight: bold; color: #004499; text-align: center; width: 220px; min-width: 220px; font-size: 1.15rem; }
     .player-header { background: #e8f2ff; color: #004499; font-size: 1.3rem; font-weight: bold; }
 
-    /* DOUBLES専用カラー（青・橙） */
     .team-blue { background: #f0f7ff !important; color: #0055bb !important; border-bottom: 2px solid #0066cc !important; }
     .team-orange { background: #fff5f0 !important; color: #cc4400 !important; border-bottom: 2px solid #ff6600 !important; }
 
-    /* 水色〜ピンク 文字内グラデーション判定 */
     .p-perfect {
       background: linear-gradient(135deg, #00c6ff 0%, #0072ff 30%, #ff007f 100%);
       -webkit-background-clip: text;
@@ -106,7 +104,6 @@
     .score { font-family: monospace; font-size: 1.5rem; color: #006699; font-weight: bold; }
     .sub-score { font-family: monospace; font-size: 1.25rem; color: #333333; }
     
-    /* 各種スコア強調表示スタイル */
     .score-gold { font-size: 1.8rem !important; color: #d4a000 !important; font-weight: 900 !important; text-shadow: 0 0 10px rgba(212, 160, 0, 0.3); transform: scale(1.08); display: inline-block; }
     .score-silver { font-size: 1.7rem !important; color: #a0a0a0 !important; font-weight: 900 !important; text-shadow: 0 0 8px rgba(160, 160, 160, 0.3); transform: scale(1.06); display: inline-block; }
     .score-bronze { font-size: 1.6rem !important; color: #b87333 !important; font-weight: 900 !important; text-shadow: 0 0 6px rgba(184, 115, 51, 0.3); transform: scale(1.04); display: inline-block; }
@@ -114,7 +111,6 @@
     
     .score-mild-top { font-size: 1.4rem !important; color: #b38800 !important; font-weight: bold !important; display: inline-block; }
 
-    /* 順位表示スタイル */
     .rank-gold { font-size: 1.5rem; color: #d4a000; font-weight: 900; }
     .rank-silver { font-size: 1.4rem; color: #a0a0a0; font-weight: 900; }
     .rank-bronze { font-size: 1.35rem; color: #b87333; font-weight: 900; }
@@ -143,7 +139,6 @@
     .anim-target { opacity: 0; display: inline-block; visibility: hidden; }
     .anim-visible { animation: dropIn 0.3s ease forwards; visibility: visible; }
 
-    /* ========== 難易度による色分け (【】全体を装飾) ========== */
     .diff-expert { color: #ff0000 !important; font-weight: bold; }
     .diff-master { color: #9b51e0 !important; font-weight: bold; }
     .diff-append {
@@ -243,7 +238,7 @@
       if (rows.length < 2) return;
       const header = rows[0];
 
-      // スプレッドシートの項目名（部門名、試合番号、合計得点など）に対応できるよう検索キーワードを判定強化
+      // スプレッドシートの項目名に完全一致・完全補完できるよう判定ロジックを強化
       const idxDept = header.findIndex(h => h.includes('部門'));
       const idxRound = header.findIndex(h => h.includes('ラウンド'));
       const idxMatch = header.findIndex(h => h.includes('試合'));
@@ -262,32 +257,29 @@
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        const dept = (idxDept !== -1 && row[idxDept]) ? row[idxDept].toUpperCase().trim() : "共通";
+        const dept = (idxDept !== -1 && row[idxDept]) ? row[idxDept].toUpperCase().trim() : "STANDARD";
         const rawRound = idxRound !== -1 ? row[idxRound] : "";
         const match = idxMatch !== -1 ? row[idxMatch] : "";
         const songNum = idxSongNum !== -1 ? row[idxSongNum] : "";
         const songName = idxSongName !== -1 ? row[idxSongName] : "";
         const name = idxName !== -1 ? row[idxName] : "";
 
+        // 必須項目（ラウンド、試合番号、名前）のどれかが欠けている行は無視
         if (!rawRound || !match || !name) continue;
 
         const round = ROUND_NAMES[rawRound] || rawRound;
-        const p = idxP !== -1 ? row[idxP] : "0";
-        const g = idxG !== -1 ? row[idxG] : "0";
-        const gd = idxGd !== -1 ? row[idxGd] : "0";
-        const b = idxB !== -1 ? row[idxB] : "0";
-        const m = idxM !== -1 ? row[idxM] : "0";
+        const p = (idxP !== -1 && row[idxP]) ? row[idxP] : "0";
+        const g = (idxG !== -1 && row[idxG]) ? row[idxG] : "0";
+        const gd = (idxGd !== -1 && row[idxGd]) ? row[idxGd] : "0";
+        const b = (idxB !== -1 && row[idxB]) ? row[idxB] : "0";
+        const m = (idxM !== -1 && row[idxM]) ? row[idxM] : "0";
         const score = parseInt(idxScore !== -1 ? row[idxScore] : "0", 10) || 0;
         const flg = (idxFlg !== -1 && row[idxFlg]) ? row[idxFlg].toUpperCase().trim() : "";
 
-        const targetDepts = (dept === "共通") ? ["STANDARD", "NEXT", "ULTIMATE", "DOUBLES"] : [dept];
-
-        targetDepts.forEach(d => {
-          if (!treeData[d]) treeData[d] = {};
-          if (!treeData[d][round]) treeData[d][round] = {};
-          if (!treeData[d][round][match]) treeData[d][round][match] = [];
-          treeData[d][round][match].push({ songNum, songName, name, p, g, gd, b, m, score, flg });
-        });
+        if (!treeData[dept]) treeData[dept] = {};
+        if (!treeData[dept][round]) treeData[dept][round] = {};
+        if (!treeData[dept][round][match]) treeData[dept][round][match] = [];
+        treeData[dept][round][match].push({ songNum, songName, name, p, g, gd, b, m, score, flg });
       }
     }
 
@@ -692,7 +684,7 @@
             return `<th class="player-header ${colorClass}">${c.header}</th>`;
           }).join('') + `</tr>`;
 
-        const getCellData = (c, key) => (c.data && c.data[key] !== undefined) ? parseInt(c.data[key], 10).toLocaleString() : '-';
+        const getCellData = (c, key) => (c.data && c.data[key] !== undefined && c.data[key] !== "") ? parseInt(c.data[key], 10).toLocaleString() : '-';
 
         let pRow = `<tr><td class="row-header"><span class="p-perfect">PERFECT</span></td>` + columns.map(c => `<td><span class="anim-target p-perfect ${animStep >= 1 ? 'anim-visible' : ''}" data-anim-step="1">${getCellData(c, 'p')}</span></td>`).join('') + `</tr>`;
         let gRow = `<tr><td class="row-header p-great">GREAT</td>` + columns.map(c => `<td class="p-great"><span class="anim-target ${animStep >= 1 ? 'anim-visible' : ''}" data-anim-step="2">${getCellData(c, 'g')}</span></td>`).join('') + `</tr>`;
