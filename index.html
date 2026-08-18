@@ -102,6 +102,13 @@
     .sub-score { font-family: monospace; font-size: 1.35rem; color: #333333; }
     .score-gold { font-size: 2rem !important; color: #d4a000 !important; font-weight: 900 !important; text-shadow: 0 0 12px rgba(212, 160, 0, 0.35); transform: scale(1.08); display: inline-block; }
 
+    /* 順位バッジの装飾（日本語表記） */
+    .rank-badge { font-weight: 900; font-size: 1.3rem; padding: 4px 16px; border-radius: 8px; display: inline-block; }
+    .rank-1 { background: #fff3c4; color: #b88600; border: 1px solid #e6b800; }
+    .rank-2 { background: #f0f0f0; color: #555555; border: 1px solid #cccccc; }
+    .rank-3 { background: #fbe5d6; color: #a64d00; border: 1px solid #e0995e; }
+    .rank-other { color: #777777; font-weight: bold; border: 1px solid #e1e4e8; background: #fafafa; }
+
     .score-box { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; }
     .badge-ap, .badge-fc { position: absolute; top: -20px; left: -24px; font-size: 0.8rem; font-weight: 900; transform: rotate(-12deg); pointer-events: none; white-space: nowrap; }
     .badge-ap { background: linear-gradient(135deg, #00c6ff 0%, #ff007f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
@@ -112,9 +119,11 @@
     .diff-append { background: linear-gradient(135deg, #c896ff 0%, #ff96d5 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; display: inline-block; }
     .diff-hard   { color: #44a9e6 !important; font-weight: bold; }
 
-    /* 初期状態：アニメーション発動前は非表示にせず、データが入っていれば最初から表示 */
-    @keyframes dropIn { 0% { opacity: 0; transform: translateY(-6px); } 100% { opacity: 1; transform: translateY(0); } }
-    .anim-target { opacity: 1; display: inline-block; }
+    /* =========================================
+       アニメーション用CSS
+    ========================================= */
+    @keyframes dropIn { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
+    .anim-target { display: inline-block; }
     .anim-hidden { opacity: 0; visibility: hidden; }
     .anim-visible { animation: dropIn 0.3s ease forwards; visibility: visible; }
   </style>
@@ -155,20 +164,27 @@
 
     function triggerAnimation() {
       animStep++;
-      if (animStep === 1) {
-        for (let step = 1; step <= 5; step++) {
-          setTimeout(() => {
-            document.querySelectorAll(`[data-anim-step="${step}"]`).forEach(el => {
-              el.classList.remove('anim-hidden');
-              el.classList.add('anim-visible');
-            });
-          }, (step - 1) * 100);
-        }
-      } else if (animStep === 2) {
-        document.querySelectorAll(`[data-anim-step="6"]`).forEach(el => {
+      if (currentSongTab === 'final') {
+        document.querySelectorAll(`[data-anim-step="${animStep}"]`).forEach(el => {
           el.classList.remove('anim-hidden');
           el.classList.add('anim-visible');
         });
+      } else {
+        if (animStep === 1) {
+          for (let step = 1; step <= 5; step++) {
+            setTimeout(() => {
+              document.querySelectorAll(`[data-anim-step="${step}"]`).forEach(el => {
+                el.classList.remove('anim-hidden');
+                el.classList.add('anim-visible');
+              });
+            }, (step - 1) * 100);
+          }
+        } else if (animStep === 2) {
+          document.querySelectorAll(`[data-anim-step="6"]`).forEach(el => {
+            el.classList.remove('anim-hidden');
+            el.classList.add('anim-visible');
+          });
+        }
       }
     }
 
@@ -218,7 +234,6 @@
         const songName = idxSongName !== -1 ? row[idxSongName] : "";
         const name = idxName !== -1 ? row[idxName].trim() : "";
 
-        // ★修正点：名前が未入力(空文字)のデータ行は完全にスキップする
         if (!dept || !name) continue;
 
         const round = ROUND_NAMES[rawRound] || rawRound || "予選";
@@ -331,6 +346,11 @@
     function selectMatch(m) { currentMatch = m; currentSongTab = null; animStep = 0; render(); }
     function selectSongTab(tab) { currentSongTab = tab; animStep = 0; render(); }
 
+    function getAnimClass(targetStep) {
+      if (animStep >= targetStep) return "anim-target anim-visible";
+      return "anim-target anim-hidden";
+    }
+
     function renderResultView(view, isBackgroundRefresh = false) {
       const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
       const isDoubles = currentDept.toUpperCase().includes("DOUBLES");
@@ -370,6 +390,12 @@
 
         const maxScore = Math.max(...participants.map(p => p.score), 0);
 
+        // 順位付け（同点考慮）
+        const sortedScores = Array.from(new Set(participants.map(p => p.score))).sort((a,b) => b - a);
+        participants.forEach(p => {
+          p.rank = sortedScores.indexOf(p.score) + 1;
+        });
+
         let headerRow = `<tr><th class="row-header"></th>` +
           participants.map((p, idx) => {
             let colorClass = "";
@@ -378,22 +404,25 @@
           }).join('') + `</tr>`;
 
         let bodyRows = "";
+        let finalStep = songNums.length + 1;
 
         if (isDoubles && finalRows.length > 0 && finalRows[0].p !== undefined) {
-          bodyRows += `<tr><td class="row-header"><span class="p-perfect">PERFECT 合計</span></td>` + participants.map(p => `<td><span class="anim-target p-perfect">${Number(p.p||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
-          bodyRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + participants.map(p => `<td class="p-great"><span class="anim-target">${Number(p.g||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
-          bodyRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + participants.map(p => `<td class="p-good"><span class="anim-target">${Number(p.gd||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
-          bodyRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + participants.map(p => `<td class="p-bad"><span class="anim-target">${Number(p.b||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
-          bodyRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + participants.map(p => `<td class="p-miss"><span class="anim-target">${Number(p.m||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
+          bodyRows += `<tr><td class="row-header"><span class="p-perfect">PERFECT 合計</span></td>` + participants.map(p => `<td><span class="${getAnimClass(1)} p-perfect" data-anim-step="1">${Number(p.p||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
+          bodyRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + participants.map(p => `<td class="p-great"><span class="${getAnimClass(2)}" data-anim-step="2">${Number(p.g||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
+          bodyRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + participants.map(p => `<td class="p-good"><span class="${getAnimClass(3)}" data-anim-step="3">${Number(p.gd||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
+          bodyRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + participants.map(p => `<td class="p-bad"><span class="${getAnimClass(4)}" data-anim-step="4">${Number(p.b||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
+          bodyRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + participants.map(p => `<td class="p-miss"><span class="${getAnimClass(5)}" data-anim-step="5">${Number(p.m||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
+          finalStep = 6;
         } else {
           bodyRows = songNums.map((sNum, idx) => {
+            const stepNum = idx + 1;
             const sName = songMap[sNum] ? `<br><small style="font-weight:normal; color:#555;">（${formatSongName(songMap[sNum])}）</small>` : '';
             let row = `<tr><td class="row-header">${sNum}曲目${sName}</td>`;
             participants.forEach(p => {
               const item = matchRows.find(r => r.name === p.name && String(r.songNum) === String(sNum));
               const sScore = item ? item.score : 0;
               const sFlg = item ? item.flg : "";
-              row += `<td class="sub-score"><span class="anim-target">${renderScoreCell(sScore, sFlg, "", true)}</span></td>`;
+              row += `<td class="sub-score"><span class="${getAnimClass(stepNum)}" data-anim-step="${stepNum}">${renderScoreCell(sScore, sFlg, "", true)}</span></td>`;
             });
             return row + `</tr>`;
           }).join('');
@@ -401,20 +430,23 @@
 
         let totalRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">合計得点</td>` + participants.map(p => {
           let sClass = (p.score === maxScore && maxScore > 0) ? "score-gold" : "";
-          return `<td class="score"><span class="anim-target">${renderScoreCell(p.score, "", sClass, false)}</span></td>`;
+          return `<td class="score"><span class="${getAnimClass(finalStep)}" data-anim-step="${finalStep}">${renderScoreCell(p.score, "", sClass, false)}</span></td>`;
         }).join('') + `</tr>`;
 
-        tableHTML = `<thead>${headerRow}</thead><tbody>${bodyRows}${totalRow}</tbody>`;
+        // ★「1位」「2位」「3位」…の日本語表記に変更
+        let rankRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#111;">順位</td>` + participants.map(p => {
+          let badgeClass = p.rank === 1 ? 'rank-1' : (p.rank === 2 ? 'rank-2' : (p.rank === 3 ? 'rank-3' : 'rank-other'));
+          return `<td><span class="${getAnimClass(finalStep)}" data-anim-step="${finalStep}"><span class="rank-badge ${badgeClass}">${p.rank}位</span></span></td>`;
+        }).join('') + `</tr>`;
+
+        tableHTML = `<thead>${headerRow}</thead><tbody>${bodyRows}${totalRow}${rankRow}</tbody>`;
 
       } else {
         const rawSongName = songMap[currentSongTab];
         const songNameStr = rawSongName ? formatSongName(rawSongName) : "";
         titleBannerHTML = `<div class="song-title-banner">${currentSongTab}曲目${songNameStr ? ` : ${songNameStr}` : ''}</div>`;
 
-        // ★修正点：対象曲のデータから「プレイヤー名がある行」だけを重複なく取り出す
         const targetRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
-
-        // 重複を除外したプレイヤー一覧を抽出
         const playerNames = Array.from(new Set(targetRows.map(r => r.name)));
         const playersData = playerNames.map(name => targetRows.find(r => r.name === name));
 
@@ -430,14 +462,14 @@
 
         const parseVal = (v) => { const n = parseInt(v, 10); return isNaN(n) ? "0" : n.toLocaleString(); };
 
-        let pRow = `<tr><td class="row-header"><span class="p-perfect">PERFECT</span></td>` + playersData.map(r => `<td><span class="anim-target p-perfect">${parseVal(r.p)}</span></td>`).join('') + `</tr>`;
-        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + playersData.map(r => `<td class="p-great"><span class="anim-target">${parseVal(r.g)}</span></td>`).join('') + `</tr>`;
-        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + playersData.map(r => `<td class="p-good"><span class="anim-target">${parseVal(r.gd)}</span></td>`).join('') + `</tr>`;
-        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + playersData.map(r => `<td class="p-bad"><span class="anim-target">${parseVal(r.b)}</span></td>`).join('') + `</tr>`;
-        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + playersData.map(r => `<td class="p-miss"><span class="anim-target">${parseVal(r.m)}</span></td>`).join('') + `</tr>`;
+        let pRow = `<tr><td class="row-header"><span class="p-perfect">PERFECT</span></td>` + playersData.map(r => `<td><span class="${getAnimClass(1)} p-perfect" data-anim-step="1">${parseVal(r.p)}</span></td>`).join('') + `</tr>`;
+        let gRow = `<tr><td class="row-header p-great">GREAT</td>` + playersData.map(r => `<td class="p-great"><span class="${getAnimClass(2)}" data-anim-step="2">${parseVal(r.g)}</span></td>`).join('') + `</tr>`;
+        let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + playersData.map(r => `<td class="p-good"><span class="${getAnimClass(3)}" data-anim-step="3">${parseVal(r.gd)}</span></td>`).join('') + `</tr>`;
+        let bRow = `<tr><td class="row-header p-bad">BAD</td>` + playersData.map(r => `<td class="p-bad"><span class="${getAnimClass(4)}" data-anim-step="4">${parseVal(r.b)}</span></td>`).join('') + `</tr>`;
+        let mRow = `<tr><td class="row-header p-miss">MISS</td>` + playersData.map(r => `<td class="p-miss"><span class="${getAnimClass(5)}" data-anim-step="5">${parseVal(r.m)}</span></td>`).join('') + `</tr>`;
 
         let scoreRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">SCORE</td>` + playersData.map(r => {
-          return `<td class="score"><span class="anim-target">${renderScoreCell(r.score, r.flg, "", true)}</span></td>`;
+          return `<td class="score"><span class="${getAnimClass(6)}" data-anim-step="6">${renderScoreCell(r.score, r.flg, "", true)}</span></td>`;
         }).join('') + `</tr>`;
 
         tableHTML = `<thead>${headerRow}</thead><tbody>${pRow}${gRow}${gdRow}${bRow}${mRow}${scoreRow}</tbody>`;
