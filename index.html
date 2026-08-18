@@ -178,7 +178,6 @@
     let currentDept = null, currentRound = null, currentMatch = null, currentSongTab = null;
     let animStep = 0;
 
-    // 【】記号を含めて難易度部分全体を色付けスパンで囲む関数
     function formatSongName(name) {
       if (!name) return "";
       return name
@@ -188,7 +187,6 @@
         .replace(/(【?HARD】?|\[?HARD\]?)/ig, '<span class="diff-hard">$1</span>');
     }
 
-    // 初回取得 & 5秒おきの自動更新設定
     fetchCSV();
     setInterval(fetchCSV, 5000);
 
@@ -202,7 +200,6 @@
 
       if (currentSongTab === 'final') {
         if (!isDoubles) {
-          // シングルス最終結果: Enter1〜3回目で各曲、4回目で合計スコアと順位を同時表示
           const targets = document.querySelectorAll(`[data-anim-step="${animStep}"]`);
           targets.forEach(el => el.classList.add('anim-visible'));
         } else {
@@ -217,16 +214,13 @@
           }
         }
       } else {
-        // 1〜3曲目リザルト
         if (animStep === 1) {
-          // Enter1回目: PERFECT〜MISSを上から順に時間差表示
           for (let step = 1; step <= 5; step++) {
             setTimeout(() => {
               document.querySelectorAll(`[data-anim-step="${step}"]`).forEach(el => el.classList.add('anim-visible'));
             }, (step - 1) * 120);
           }
         } else if (animStep === 2) {
-          // Enter2回目: SCORE表示
           document.querySelectorAll(`[data-anim-step="6"]`).forEach(el => el.classList.add('anim-visible'));
         }
       }
@@ -241,7 +235,7 @@
       } catch (err) {
         console.error("CSV fetch error:", err);
       }
-      render(true); // バックグラウンド更新時は演出ステップをリセットしない
+      render(true);
     }
 
     function parseCSV(text) {
@@ -249,6 +243,7 @@
       if (rows.length < 2) return;
       const header = rows[0];
 
+      // スプレッドシートの項目名（部門名、試合番号、合計得点など）に対応できるよう検索キーワードを判定強化
       const idxDept = header.findIndex(h => h.includes('部門'));
       const idxRound = header.findIndex(h => h.includes('ラウンド'));
       const idxMatch = header.findIndex(h => h.includes('試合'));
@@ -456,10 +451,6 @@
     function selectSongTab(tab) { currentSongTab = tab; animStep = 0; render(); }
 
     function renderResultView(view, isBackgroundRefresh = false) {
-      if (!isBackgroundRefresh) {
-        // 通常の画面読み込み・タブ切り替え時のみステップをリセット
-        // (バックグラウンド自動更新時はEnterで進めた表示状態をキープする)
-      }
       const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
       const isDoubles = currentDept.toUpperCase().includes("DOUBLES");
 
@@ -652,7 +643,6 @@
           }
         }
 
-        // 順位を行の最後（合計得点の下）に配置
         tableHTML = `<thead>${headerRow}</thead><tbody>${songRows}${summaryRows}${totalRow}${rankRow}</tbody>`;
 
       } else {
