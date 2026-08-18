@@ -101,7 +101,6 @@
     .score { font-family: monospace; font-size: 1.65rem; color: #006699; font-weight: bold; }
     .sub-score { font-family: monospace; font-size: 1.35rem; color: #333333; }
     
-    /* 🔴 最高スコアの赤色強調表示 */
     .score-highest {
       color: #e60000 !important;
       font-weight: 900 !important;
@@ -124,13 +123,12 @@
     .badge-ap { background: linear-gradient(135deg, #00c6ff 0%, #ff007f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .badge-fc { color: #d0006f; }
 
-    /* 難易度カラー定義 */
     .diff-expert { color: #ff0000 !important; font-weight: bold; }
     .diff-master { color: #9b51e0 !important; font-weight: bold; }
     .diff-append { background: linear-gradient(135deg, #c896ff 0%, #ff96d5 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; display: inline-block; }
 
     /* =========================================
-       アニメーション要素の制御（上から下へ時差）
+       アニメーション要素の制御
     ========================================= */
     .anim-target {
       display: inline-block;
@@ -226,13 +224,26 @@
 
       treeData = {};
 
+      // スプレッドシートの結合セル対策：直前の値を保持する
+      let lastDept = "";
+      let lastRound = "";
+      let lastMatch = "";
+
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         if (!row || row.length === 0) continue;
 
-        const dept = (idxDept !== -1 && row[idxDept]) ? row[idxDept].toUpperCase().trim() : "";
-        const rawRound = idxRound !== -1 ? row[idxRound] : "";
-        const match = idxMatch !== -1 ? String(row[idxMatch]).trim() : "1";
+        let dept = (idxDept !== -1 && row[idxDept]) ? row[idxDept].toUpperCase().trim() : "";
+        let rawRound = idxRound !== -1 ? row[idxRound] : "";
+        let match = idxMatch !== -1 ? String(row[idxMatch]).trim() : "";
+
+        // 結合セルで空欄になっている場合は直前の行のデータを引き継ぐ
+        if (dept) lastDept = dept; else dept = lastDept;
+        if (rawRound) lastRound = rawRound; else rawRound = lastRound;
+        if (match) lastMatch = match; else match = lastMatch;
+
+        if (!match) match = "1";
+
         const songNum = idxSongNum !== -1 ? String(row[idxSongNum]).trim() : "1";
         const songName = idxSongName !== -1 ? row[idxSongName] : "";
         const name = idxName !== -1 ? row[idxName].trim() : "";
@@ -349,9 +360,8 @@
     function selectMatch(m) { currentMatch = m; currentSongTab = null; animStep = 0; render(); }
     function selectSongTab(tab) { currentSongTab = tab; animStep = 0; render(); }
 
-    /* 上から下へ時差をつける（delayIndex は行インデックスを想定） */
     function getAnimClass(targetStep, delayIndex = 0) {
-      const delaySec = (delayIndex * 0.15).toFixed(2); // 0.15秒ずつ遅らせる
+      const delaySec = (delayIndex * 0.15).toFixed(2);
       const delayStyle = `style="transition-delay: ${delaySec}s;"`;
       if (animStep >= targetStep) {
         return `class="anim-target anim-visible" ${delayStyle}`;
@@ -382,9 +392,6 @@
       let tableHTML = "";
       let titleBannerHTML = "";
 
-      // ==========================================
-      // 最終結果タブ
-      // ==========================================
       if (currentSongTab === 'final') {
         titleBannerHTML = `<div class="song-title-banner">最終結果</div>`;
         const finalRows = matchRows.filter(r => r.songNum === "合計" || r.songNum === "最終結果" || r.songNum === "total");
@@ -414,11 +421,9 @@
           let badgeClass = "badge-black";
           let scoreClass = "";
 
-          // 1位は赤文字強調 (score-highest) を適用
           if (p.rank === 1) {
             scoreClass = "score-highest";
           } else {
-            // 2位以下の装飾
             if (isDoubles || (isUltimate && roundName.includes("準決勝"))) {
               showRankRow = false;
             } else if (isUltimate && roundName.includes("決勝") && p.rank === 2) {
@@ -426,11 +431,10 @@
             }
           }
 
-          // バッジの色（順位用）
           if (p.rank === 1) badgeClass = "badge-gold";
           else if (p.rank === 2 && (isStandard || isNext)) badgeClass = "badge-silver";
           else if (p.rank === 3 && (isStandard || isNext)) badgeClass = "badge-bronze";
-          else if (p.rank === 2) badgeClass = "badge-red"; // Ultimate等
+          else if (p.rank === 2) badgeClass = "badge-red"; 
 
           p.badgeClass = badgeClass;
           p.scoreClass = scoreClass;
@@ -447,21 +451,19 @@
         let finalStep = songNums.length + 1;
 
         if (isDoubles && finalRows.length > 0 && finalRows[0].p !== undefined) {
-          // DOUBLESの場合はP〜M合計を上から下に時差表示
-          bodyRows += `<tr><td class="row-header"><span class="p-perfect">PERFECT 合計</span></td>` + participants.map(p => `<td><span ${getAnimClass(1, 0)} class="p-perfect" data-anim-step="1">${Number(p.p||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
+          // PERFECTの数字は標準の文字色（黒）にするため、クラス（p-perfect）を除去しています
+          bodyRows += `<tr><td class="row-header"><span class="p-perfect">PERFECT 合計</span></td>` + participants.map(p => `<td><span ${getAnimClass(1, 0)} data-anim-step="1">${Number(p.p||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
           bodyRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + participants.map(p => `<td class="p-great"><span ${getAnimClass(1, 1)} data-anim-step="1">${Number(p.g||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
           bodyRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + participants.map(p => `<td class="p-good"><span ${getAnimClass(1, 2)} data-anim-step="1">${Number(p.gd||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
           bodyRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + participants.map(p => `<td class="p-bad"><span ${getAnimClass(1, 3)} data-anim-step="1">${Number(p.b||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
           bodyRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + participants.map(p => `<td class="p-miss"><span ${getAnimClass(1, 4)} data-anim-step="1">${Number(p.m||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
-          finalStep = 2; // 合計と順位はStep2
+          finalStep = 2; 
         } else {
-          // 通常の最終結果（各曲スコア表示）
           bodyRows = songNums.map((sNum, sIdx) => {
             const stepNum = sIdx + 1;
             const sName = songMap[sNum] ? `<br><small style="font-weight:normal; color:#555;">（${formatSongName(songMap[sNum])}）</small>` : '';
             let row = `<tr><td class="row-header">${sNum}曲目${sName}</td>`;
             
-            // この曲における全プレイヤーのスコアの中で最も高いものを探す
             const sScores = participants.map(p => {
               const item = matchRows.find(r => r.name === p.name && String(r.songNum) === String(sNum));
               return item ? item.score : 0;
@@ -472,17 +474,13 @@
               const item = matchRows.find(r => r.name === p.name && String(r.songNum) === String(sNum));
               const sScore = item ? item.score : 0;
               const sFlg = item ? item.flg : "";
-              
-              // 最高得点なら赤色クラスを追加
               const isHighest = (sScore === maxSScore && sScore > 0);
-              
               row += `<td class="sub-score"><span ${getAnimClass(stepNum, 0)} data-anim-step="${stepNum}">${renderScoreCell(sScore, sFlg, isHighest ? "score-highest" : "", true)}</span></td>`;
             });
             return row + `</tr>`;
           }).join('');
         }
 
-        // 合計得点 → 順位 の順に時差表示 (delayIndex 0 と 2)
         let totalRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">合計得点</td>` + participants.map((p) => {
           return `<td class="score"><span ${getAnimClass(finalStep, 0)} data-anim-step="${finalStep}">${renderScoreCell(p.score, "", p.scoreClass, false)}</span></td>`;
         }).join('') + `</tr>`;
@@ -497,9 +495,6 @@
         tableHTML = `<thead>${headerRow}</thead><tbody>${bodyRows}${totalRow}${rankRow}</tbody>`;
 
       } else {
-        // ==========================================
-        // 各曲タブ
-        // ==========================================
         const rawSongName = songMap[currentSongTab];
         const songNameStr = rawSongName ? formatSongName(rawSongName) : "";
         titleBannerHTML = `<div class="song-title-banner">${currentSongTab}曲目${songNameStr ? ` : ${songNameStr}` : ''}</div>`;
@@ -520,17 +515,15 @@
 
         const parseVal = (v) => { const n = parseInt(v, 10); return isNaN(n) ? "0" : n.toLocaleString(); };
 
-        // P〜Mまで上から下に時差表示（delayIndex: 0〜4）
-        let pRow  = `<tr><td class="row-header"><span class="p-perfect">PERFECT</span></td>` + playersData.map(r => `<td><span ${getAnimClass(1, 0)} class="p-perfect" data-anim-step="1">${parseVal(r.p)}</span></td>`).join('') + `</tr>`;
+        // PERFECTの数字は標準の文字色（黒）にするため、クラス（p-perfect）を除去しています
+        let pRow  = `<tr><td class="row-header"><span class="p-perfect">PERFECT</span></td>` + playersData.map(r => `<td><span ${getAnimClass(1, 0)} data-anim-step="1">${parseVal(r.p)}</span></td>`).join('') + `</tr>`;
         let gRow  = `<tr><td class="row-header p-great">GREAT</td>` + playersData.map(r => `<td class="p-great"><span ${getAnimClass(1, 1)} data-anim-step="1">${parseVal(r.g)}</span></td>`).join('') + `</tr>`;
         let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + playersData.map(r => `<td class="p-good"><span ${getAnimClass(1, 2)} data-anim-step="1">${parseVal(r.gd)}</span></td>`).join('') + `</tr>`;
         let bRow  = `<tr><td class="row-header p-bad">BAD</td>` + playersData.map(r => `<td class="p-bad"><span ${getAnimClass(1, 3)} data-anim-step="1">${parseVal(r.b)}</span></td>`).join('') + `</tr>`;
         let mRow  = `<tr><td class="row-header p-miss">MISS</td>` + playersData.map(r => `<td class="p-miss"><span ${getAnimClass(1, 4)} data-anim-step="1">${parseVal(r.m)}</span></td>`).join('') + `</tr>`;
 
-        // この曲の最高スコアを計算
         const maxScore = Math.max(...playersData.map(r => r.score));
 
-        // SCOREは次のステップ(エンター2回目)
         let scoreRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">SCORE</td>` + playersData.map((r) => {
           const isHighest = (r.score === maxScore && r.score > 0);
           return `<td class="score"><span ${getAnimClass(2, 0)} data-anim-step="2">${renderScoreCell(r.score, r.flg, isHighest ? "score-highest" : "", true)}</span></td>`;
