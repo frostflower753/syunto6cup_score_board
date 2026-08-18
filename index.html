@@ -100,25 +100,27 @@
 
     .score { font-family: monospace; font-size: 1.65rem; color: #006699; font-weight: bold; }
     .sub-score { font-family: monospace; font-size: 1.35rem; color: #333333; }
+    
+    /* 指定されたスコア・順位カラー設定 */
     .score-gold { font-size: 2rem !important; color: #d4a000 !important; font-weight: 900 !important; text-shadow: 0 0 12px rgba(212, 160, 0, 0.35); transform: scale(1.08); display: inline-block; }
+    .score-silver { font-size: 2rem !important; color: #a0a0a0 !important; font-weight: 900 !important; text-shadow: 0 0 12px rgba(160, 160, 160, 0.35); transform: scale(1.08); display: inline-block; }
 
-    /* 順位バッジ */
     .rank-badge { font-weight: 900; font-size: 1.3rem; padding: 4px 16px; border-radius: 8px; display: inline-block; }
-    .rank-1 { background: #fff3c4; color: #b88600; border: 1px solid #e6b800; }
-    .rank-2 { background: #f0f0f0; color: #555555; border: 1px solid #cccccc; }
-    .rank-3 { background: #fbe5d6; color: #a64d00; border: 1px solid #e0995e; }
-    .rank-other { color: #777777; font-weight: bold; border: 1px solid #e1e4e8; background: #fafafa; }
+    .badge-gold { background: #fff9e6; color: #d4a000; border: 1px solid #d4a000; }
+    .badge-silver { background: #f2f2f2; color: #a0a0a0; border: 1px solid #a0a0a0; }
+    .badge-bronze { background: #fdf3e8; color: #b87333; border: 1px solid #b87333; }
+    .badge-red { background: #ffebeb; color: #cc3333; border: 1px solid #cc3333; }
+    .badge-black { background: #fafafa; color: #333333; border: 1px solid #cccccc; }
 
     .score-box { position: relative; display: inline-flex; flex-direction: column; align-items: center; justify-content: center; }
     .badge-ap, .badge-fc { position: absolute; top: -20px; left: -24px; font-size: 0.8rem; font-weight: 900; transform: rotate(-12deg); pointer-events: none; white-space: nowrap; }
     .badge-ap { background: linear-gradient(135deg, #00c6ff 0%, #ff007f 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .badge-fc { color: #d0006f; }
 
-    /* 難易度カラー定義 */
+    /* 難易度カラー定義（EXPERT / MASTER / APPEND のみ） */
     .diff-expert { color: #ff0000 !important; font-weight: bold; }
     .diff-master { color: #9b51e0 !important; font-weight: bold; }
     .diff-append { background: linear-gradient(135deg, #c896ff 0%, #ff96d5 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: bold; display: inline-block; }
-    .diff-hard   { color: #44a9e6 !important; font-weight: bold; }
 
     /* アニメーション要素の制御 */
     .anim-target { display: inline-block; }
@@ -149,8 +151,7 @@
       return name
         .replace(/(【?EXPERT\d*】?|\[?EXPERT\d*\]?)/ig, '<span class="diff-expert">$1</span>')
         .replace(/(【?MASTER\d*】?|\[?MASTER\d*\]?)/ig, '<span class="diff-master">$1</span>')
-        .replace(/(【?APPEND\d*】?|\[?APPEND\d*\]?)/ig, '<span class="diff-append">$1</span>')
-        .replace(/(【?HARD\d*】?|\[?HARD\d*\]?)/ig, '<span class="diff-hard">$1</span>');
+        .replace(/(【?APPEND\d*】?|\[?APPEND\d*\]?)/ig, '<span class="diff-append">$1</span>');
     }
 
     fetchCSV();
@@ -162,7 +163,6 @@
 
     function triggerAnimation() {
       animStep++;
-      // 画面上の対象ステップの要素だけを可視化（不要な上書きを防ぐ）
       document.querySelectorAll(`[data-anim-step="${animStep}"]`).forEach(el => {
         el.classList.remove('anim-hidden');
         el.classList.add('anim-visible');
@@ -178,7 +178,6 @@
       } catch (err) {
         console.error("CSV fetch error:", err);
       }
-      // ユーザーがEnterを押して進行している途中は画面リフレッシュを防止する
       if (animStep === 0) {
         render(true);
       }
@@ -337,7 +336,13 @@
 
     function renderResultView(view, isBackgroundRefresh = false) {
       const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
-      const isDoubles = currentDept.toUpperCase().includes("DOUBLES");
+      
+      const deptName = currentDept.toUpperCase();
+      const isDoubles = deptName.includes("DOUBLES");
+      const isStandard = deptName.includes("STANDARD");
+      const isNext = deptName.includes("NEXT");
+      const isUltimate = deptName.includes("ULTIMATE");
+      const roundName = currentRound || "";
 
       const songMap = {};
       matchRows.forEach(r => {
@@ -372,11 +377,56 @@
           participants = nameOrder.map(n => ({ name: n, score: nameTotals[n] }));
         }
 
-        const maxScore = Math.max(...participants.map(p => p.score), 0);
-
         const sortedScores = Array.from(new Set(participants.map(p => p.score))).sort((a,b) => b - a);
+        
+        let showRankRow = true;
+
         participants.forEach(p => {
           p.rank = sortedScores.indexOf(p.score) + 1;
+          
+          let badgeClass = "badge-black";
+          let scoreClass = "";
+
+          // 部門・ラウンドごとの色付け・表示ルール適用
+          if (isDoubles) {
+            showRankRow = false;
+            if (p.rank === 1) scoreClass = "score-gold";
+          } else if (isUltimate) {
+            if (roundName.includes("準決勝")) {
+              showRankRow = false;
+              if (p.rank === 1) scoreClass = "score-gold";
+            } else if (roundName.includes("決勝")) {
+              showRankRow = false;
+              if (p.rank === 1) scoreClass = "score-gold";
+              else if (p.rank === 2) scoreClass = "score-silver";
+            } else if (roundName.includes("準々決勝")) {
+              if (p.rank === 1) badgeClass = "badge-gold";
+              else if (p.rank === 2) badgeClass = "badge-red";
+            }
+          } else if (isStandard) {
+            if (roundName.includes("準々決勝")) {
+              if (p.rank === 1) badgeClass = "badge-gold";
+            } else if (roundName.includes("準決勝")) {
+              if (p.rank === 1) badgeClass = "badge-gold";
+              else if (p.rank === 2) badgeClass = "badge-red";
+            } else if (roundName.includes("決勝")) {
+              if (p.rank === 1) badgeClass = "badge-gold";
+              else if (p.rank === 2) badgeClass = "badge-silver";
+              else if (p.rank === 3) badgeClass = "badge-bronze";
+            }
+          } else if (isNext) {
+            if (roundName.includes("準々決勝") || roundName.includes("準決勝")) {
+              if (p.rank === 1) badgeClass = "badge-gold";
+              else if (p.rank === 2) badgeClass = "badge-red";
+            } else if (roundName.includes("決勝")) {
+              if (p.rank === 1) badgeClass = "badge-gold";
+              else if (p.rank === 2) badgeClass = "badge-silver";
+              else if (p.rank === 3) badgeClass = "badge-bronze";
+            }
+          }
+
+          p.badgeClass = badgeClass;
+          p.scoreClass = scoreClass;
         });
 
         let headerRow = `<tr><th class="row-header"></th>` +
@@ -412,19 +462,19 @@
         }
 
         let totalRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">合計得点</td>` + participants.map(p => {
-          let sClass = (p.score === maxScore && maxScore > 0) ? "score-gold" : "";
-          return `<td class="score"><span class="${getAnimClass(finalStep)}" data-anim-step="${finalStep}">${renderScoreCell(p.score, "", sClass, false)}</span></td>`;
+          return `<td class="score"><span class="${getAnimClass(finalStep)}" data-anim-step="${finalStep}">${renderScoreCell(p.score, "", p.scoreClass, false)}</span></td>`;
         }).join('') + `</tr>`;
 
-        let rankRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#111;">順位</td>` + participants.map(p => {
-          let badgeClass = p.rank === 1 ? 'rank-1' : (p.rank === 2 ? 'rank-2' : (p.rank === 3 ? 'rank-3' : 'rank-other'));
-          return `<td><span class="${getAnimClass(finalStep)}" data-anim-step="${finalStep}"><span class="rank-badge ${badgeClass}">${p.rank}位</span></span></td>`;
-        }).join('') + `</tr>`;
+        let rankRow = "";
+        if (showRankRow) {
+          rankRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#111;">順位</td>` + participants.map(p => {
+            return `<td><span class="${getAnimClass(finalStep)}" data-anim-step="${finalStep}"><span class="rank-badge ${p.badgeClass}">${p.rank}位</span></span></td>`;
+          }).join('') + `</tr>`;
+        }
 
         tableHTML = `<thead>${headerRow}</thead><tbody>${bodyRows}${totalRow}${rankRow}</tbody>`;
 
       } else {
-        // --- 各曲目（単曲表示）のアニメーション制御 ---
         const rawSongName = songMap[currentSongTab];
         const songNameStr = rawSongName ? formatSongName(rawSongName) : "";
         titleBannerHTML = `<div class="song-title-banner">${currentSongTab}曲目${songNameStr ? ` : ${songNameStr}` : ''}</div>`;
@@ -445,14 +495,12 @@
 
         const parseVal = (v) => { const n = parseInt(v, 10); return isNaN(n) ? "0" : n.toLocaleString(); };
 
-        // ステップ1: PERFECT〜MISSのすべての内訳数値を一括表示
         let pRow = `<tr><td class="row-header"><span class="p-perfect">PERFECT</span></td>` + playersData.map(r => `<td><span class="${getAnimClass(1)} p-perfect" data-anim-step="1">${parseVal(r.p)}</span></td>`).join('') + `</tr>`;
         let gRow = `<tr><td class="row-header p-great">GREAT</td>` + playersData.map(r => `<td class="p-great"><span class="${getAnimClass(1)}" data-anim-step="1">${parseVal(r.g)}</span></td>`).join('') + `</tr>`;
         let gdRow = `<tr><td class="row-header p-good">GOOD</td>` + playersData.map(r => `<td class="p-good"><span class="${getAnimClass(1)}" data-anim-step="1">${parseVal(r.gd)}</span></td>`).join('') + `</tr>`;
         let bRow = `<tr><td class="row-header p-bad">BAD</td>` + playersData.map(r => `<td class="p-bad"><span class="${getAnimClass(1)}" data-anim-step="1">${parseVal(r.b)}</span></td>`).join('') + `</tr>`;
         let mRow = `<tr><td class="row-header p-miss">MISS</td>` + playersData.map(r => `<td class="p-miss"><span class="${getAnimClass(1)}" data-anim-step="1">${parseVal(r.m)}</span></td>`).join('') + `</tr>`;
 
-        // ステップ2: SCOREを表示
         let scoreRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">SCORE</td>` + playersData.map(r => {
           return `<td class="score"><span class="${getAnimClass(2)}" data-anim-step="2">${renderScoreCell(r.score, r.flg, "", true)}</span></td>`;
         }).join('') + `</tr>`;
