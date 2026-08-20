@@ -308,7 +308,7 @@
       else if (level === 'round') { currentRound = currentMatch = currentSongTab = null; }
       else if (level === 'match') { currentMatch = currentSongTab = null; }
       else if (level === 'song') { currentSongTab = null; }
-      render();
+      fetchCSV();
     }
 
     function render(isBackgroundRefresh = false) {
@@ -357,10 +357,10 @@
       renderResultView(view, isBackgroundRefresh);
     }
 
-    function selectDept(d) { currentDept = d; animStep = 0; render(); }
-    function selectRound(r) { currentRound = r; animStep = 0; render(); }
-    function selectMatch(m) { currentMatch = m; currentSongTab = null; animStep = 0; render(); }
-    function selectSongTab(tab) { currentSongTab = tab; animStep = 0; render(); }
+    function selectDept(d) { currentDept = d; animStep = 0; fetchCSV(); }
+    function selectRound(r) { currentRound = r; animStep = 0; fetchCSV(); }
+    function selectMatch(m) { currentMatch = m; currentSongTab = null; animStep = 0; fetchCSV(); }
+    function selectSongTab(tab) { currentSongTab = tab; animStep = 0; fetchCSV(); }
 
     function getAnimClass(targetStep, delayIndex = 0) {
       const delaySec = (delayIndex * 0.15).toFixed(2);
@@ -443,7 +443,6 @@
             const maxScore = Math.max(...pData.map(d => d.score));
             let totalRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">合計得点</td>` + pData.map(d => {
               let scoreClass = "";
-              // 全員0点でも装飾を適用
               if (d.score === maxScore) scoreClass = "score-highest";
               if (d.score < maxScore && isFinal) scoreClass = "score-silver";
               return `<td class="score"><span ${getAnimClass(finalStep, 0)} data-anim-step="${finalStep}">${renderScoreCell(d.score, "", scoreClass, false)}</span></td>`;
@@ -456,12 +455,11 @@
           // ==============================
           // ダブルス以外の最終結果（1〜3曲目＋合計得点＋順位 を表示）
           // ==============================
-          const displaySongNums = ['1', '2', '3']; // 3曲固定
+          const displaySongNums = ['1', '2', '3'];
 
           let headerRow = `<tr><th class="row-header"></th>` +
             uniqueNames.map(name => `<th class="player-header">${name}</th>`).join('') + `</tr>`;
 
-          // プレイヤーごとのスコア集計
           let participants = uniqueNames.map(name => {
             let totalScore = 0;
             let songScores = {};
@@ -476,7 +474,6 @@
             return { name, totalScore, songScores, songFlgs };
           });
 
-          // 順位付けとバッジクラスの判定
           const sortedScores = Array.from(new Set(participants.map(p => p.totalScore))).sort((a,b) => b - a);
           participants.forEach(p => {
             p.rank = sortedScores.indexOf(p.totalScore) + 1;
@@ -500,7 +497,6 @@
             }
           });
 
-          // 各曲の行を生成
           let bodyRows = displaySongNums.map((sNum, sIdx) => {
             const stepNum = sIdx + 1;
             const sName = songMap[sNum] ? `<br><small style="font-weight:normal; color:#555;">（${formatSongName(songMap[sNum])}）</small>` : '';
@@ -511,20 +507,17 @@
             participants.forEach(p => {
               const sScore = p.songScores[sNum];
               const sFlg = p.songFlgs[sNum];
-              // 0点でも同率トップなら赤字にする
               const isHighest = (sScore === maxSScore); 
               row += `<td class="sub-score"><span ${getAnimClass(stepNum, 0)} data-anim-step="${stepNum}">${renderScoreCell(sScore, sFlg, isHighest ? "score-highest" : "", true)}</span></td>`;
             });
             return row + `</tr>`;
           }).join('');
 
-          // 合計得点の行を生成
           const finalStep = 4;
           let totalRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">合計得点</td>` + participants.map(p => {
             return `<td class="score"><span ${getAnimClass(finalStep, 0)} data-anim-step="${finalStep}">${renderScoreCell(p.totalScore, "", p.scoreClass, false)}</span></td>`;
           }).join('') + `</tr>`;
 
-          // 順位の行を生成（条件で表示/非表示）
           let rankRow = "";
           if (showRankRow) {
             rankRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#111;">順位</td>` + participants.map(p => {
@@ -545,7 +538,6 @@
 
         const targetRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
         
-        // プレイヤー重複排除
         const playerNames = [];
         targetRows.forEach(r => {
           if (r.name && !playerNames.includes(r.name)) {
