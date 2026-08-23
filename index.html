@@ -347,7 +347,8 @@
 
       if (currentSongTab === null) {
         const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
-        const songNums = Array.from(new Set(matchRows.map(r => String(r.songNum).trim()).filter(s => s))).sort((a,b) => parseInt(a) - parseInt(b));
+        // 数字の曲番号のみ取得（「最終結果」という文字はボタン一覧から排除）
+        const songNums = Array.from(new Set(matchRows.map(r => String(r.songNum).trim()).filter(s => s && s !== '最終結果' && !isNaN(parseInt(s))))).sort((a,b) => parseInt(a) - parseInt(b));
 
         let songCardsHTML = songNums.map(num => `<div class="selection-card" onclick="selectSongTab('${num}')">${num}曲目<div class="sub">${num}曲目のスコア結果</div></div>`).join('');
         songCardsHTML += `<div class="selection-card gold-card" onclick="selectSongTab('final')">最終結果<div class="sub">総合スコア</div></div>`;
@@ -388,7 +389,8 @@
         if (r.songName && r.songNum) songMap[r.songNum] = r.songName;
       });
 
-      const songNums = Array.from(new Set(matchRows.map(r => String(r.songNum).trim()).filter(s => s))).sort((a,b) => parseInt(a) - parseInt(b));
+      // 数字の曲番号のみ（「最終結果」を除く）
+      const songNums = Array.from(new Set(matchRows.map(r => String(r.songNum).trim()).filter(s => s && s !== '最終結果' && !isNaN(parseInt(s))))).sort((a,b) => parseInt(a) - parseInt(b));
 
       let tabsHTML = songNums.map(num => `<button class="tab-btn ${currentSongTab === num ? 'active' : ''}" onclick="selectSongTab('${num}')">${num}曲目</button>`).join('') +
         `<button class="tab-btn ${currentSongTab === 'final' ? 'active' : ''}" onclick="selectSongTab('final')">最終結果</button>`;
@@ -401,10 +403,10 @@
 
         if (isDoubles) {
           // ==============================
-          // ダブルス部門の最終結果（チーム合計表示）
+          // ダブルス部門の最終結果
+          // 曲番号(songNum) または 曲名(songName) に「最終結果」が含まれる行を取得
           // ==============================
-          // 曲番号が入っていない（または空欄）の行からチーム名を取得
-          const teamRows = matchRows.filter(r => !r.songNum || r.songNum === "");
+          const teamRows = matchRows.filter(r => r.songNum === '最終結果' || r.songName === '最終結果');
           
           let headerRow = `<tr><th class="row-header"></th>` +
             teamRows.map((r, idx) => {
