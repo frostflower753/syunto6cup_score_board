@@ -347,7 +347,6 @@
 
       if (currentSongTab === null) {
         const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
-        // 数字の曲番号のみ取得（「最終結果」という文字はボタン一覧から排除）
         const songNums = Array.from(new Set(matchRows.map(r => String(r.songNum).trim()).filter(s => s && s !== '最終結果' && !isNaN(parseInt(s))))).sort((a,b) => parseInt(a) - parseInt(b));
 
         let songCardsHTML = songNums.map(num => `<div class="selection-card" onclick="selectSongTab('${num}')">${num}曲目<div class="sub">${num}曲目のスコア結果</div></div>`).join('');
@@ -384,12 +383,16 @@
       const isNext = deptName.includes("NEXT");
       const isUltimate = deptName.includes("ULTIMATE");
 
+      // チーム名のリストを特定（「最終結果」と書かれた行の名称）
+      const teamNames = Array.from(new Set(
+        matchRows.filter(r => r.songNum === '最終結果' || r.songName === '最終結果').map(r => r.name)
+      ));
+
       const songMap = {};
       matchRows.forEach(r => {
         if (r.songName && r.songNum) songMap[r.songNum] = r.songName;
       });
 
-      // 数字の曲番号のみ（「最終結果」を除く）
       const songNums = Array.from(new Set(matchRows.map(r => String(r.songNum).trim()).filter(s => s && s !== '最終結果' && !isNaN(parseInt(s))))).sort((a,b) => parseInt(a) - parseInt(b));
 
       let tabsHTML = songNums.map(num => `<button class="tab-btn ${currentSongTab === num ? 'active' : ''}" onclick="selectSongTab('${num}')">${num}曲目</button>`).join('') +
@@ -402,10 +405,7 @@
         titleBannerHTML = `<div class="song-title-banner">最終結果</div>`;
 
         if (isDoubles) {
-          // ==============================
-          // ダブルス部門の最終結果
-          // 曲番号(songNum) または 曲名(songName) に「最終結果」が含まれる行を取得
-          // ==============================
+          // ダブルス部門の最終結果：チーム名（2チーム）のみ抽出
           const teamRows = matchRows.filter(r => r.songNum === '最終結果' || r.songName === '最終結果');
           
           let headerRow = `<tr><th class="row-header"></th>` +
@@ -433,9 +433,7 @@
           tableHTML = `<thead>${headerRow}</thead><tbody>${pRow}${gRow}${gdRow}${bRow}${mRow}${scoreRow}</tbody>`;
 
         } else {
-          // ==============================
-          // 個人部門の最終結果（曲ごと積み上げ表示）
-          // ==============================
+          // 個人部門の最終結果
           const roundName = currentRound || "";
           const isQF = roundName.includes("準々決勝");
           const isSF = roundName.includes("準決勝");
@@ -449,9 +447,7 @@
           });
 
           const displaySongNums = songNums;
-
-          let showRankRow = true;
-          if (isUltimate && (isSF || isFinal)) showRankRow = false;
+          let showRankRow = !(isUltimate && (isSF || isFinal));
 
           let headerRow = `<tr><th class="row-header"></th>` +
             uniqueNames.map((name) => `<th class="player-header">${name}</th>`).join('') + `</tr>`;
@@ -501,7 +497,6 @@
               : '';
             
             let row = `<tr><td class="row-header">${sNum}曲目${sName}</td>`;
-
             const maxSScore = Math.max(...participants.map(p => p.songScores[sNum] || 0));
 
             participants.forEach(p => {
@@ -529,14 +524,17 @@
         }
 
       } else {
-        // ==============================
-        // 個別曲（1曲目、2曲目等）の表示
-        // ==============================
+        // 個別曲（1曲目、2曲目、3曲目など）の表示
         const rawSongName = songMap[currentSongTab];
         const songNameStr = (rawSongName && rawSongName.trim() !== "") ? formatSongName(rawSongName) : "";
         titleBannerHTML = `<div class="song-title-banner">${currentSongTab}曲目${songNameStr ? ` : ${songNameStr}` : ''}</div>`;
 
-        const targetRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
+        let targetRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
+
+        // ★ダブルス部門の場合、各曲では「チーム名」の行を除外して「個人（1・2曲目は2名、3曲目は4名）」のみを抽出★
+        if (isDoubles && teamNames.length > 0) {
+          targetRows = targetRows.filter(r => !teamNames.includes(r.name));
+        }
         
         const playerNames = [];
         targetRows.forEach(r => {
@@ -551,7 +549,9 @@
           playersData.map((r, idx) => {
             let colorClass = "";
             if (isDoubles) {
-              colorClass = (idx % 2 === 0) ? 'team-blue' : 'team-orange';
+              // 個人をチームごとに色分け（前半＝青チーム、後半＝オレンジチーム）
+              const half = Math.ceil(playersData.length / 2);
+              colorClass = (idx < half) ? 'team-blue' : 'team-orange';
             }
             return `<th class="player-header ${colorClass}">${r ? r.name : ""}</th>`;
           }).join('') + `</tr>`;
