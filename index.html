@@ -245,6 +245,9 @@
         if (dept) lastDept = dept; else dept = lastDept;
         if (rawRound) lastRound = rawRound; else rawRound = lastRound;
         if (match) lastMatch = match; else match = lastMatch;
+        
+        // ★重要: CSV内で曲番号セルが空の場合に前行を引き継がない処理
+        let hasDirectSongNum = idxSongNum !== -1 && row[idxSongNum] !== "";
         if (rawSongNum) lastSongNum = rawSongNum; else rawSongNum = lastSongNum;
 
         if (!match) match = "1";
@@ -268,7 +271,15 @@
         if (!treeData[dept][round]) treeData[dept][round] = {};
         if (!treeData[dept][round][match]) treeData[dept][round][match] = [];
         
-        treeData[dept][round][match].push({ songNum, songName, name, p, g, gd, b, m, score, flg });
+        treeData[dept][round][match].push({ 
+          songNum, 
+          songName, 
+          name, 
+          p, g, gd, b, m, 
+          score, 
+          flg,
+          hasDirectSongNum
+        });
       }
     }
 
@@ -383,11 +394,6 @@
       const isNext = deptName.includes("NEXT");
       const isUltimate = deptName.includes("ULTIMATE");
 
-      // チーム名のリストを特定（「最終結果」と書かれた行の名称）
-      const teamNames = Array.from(new Set(
-        matchRows.filter(r => r.songNum === '最終結果' || r.songName === '最終結果').map(r => r.name)
-      ));
-
       const songMap = {};
       matchRows.forEach(r => {
         if (r.songName && r.songNum) songMap[r.songNum] = r.songName;
@@ -405,8 +411,14 @@
         titleBannerHTML = `<div class="song-title-banner">最終結果</div>`;
 
         if (isDoubles) {
-          // ダブルス部門の最終結果：チーム名（2チーム）のみ抽出
-          const teamRows = matchRows.filter(r => r.songNum === '最終結果' || r.songName === '最終結果');
+          // ★ダブルス部門の最終結果：末尾の「チーム行」2つを自動抽出★
+          // 判定：曲番号が『最終結果』になっている行、または一番最後にある集計行を取得
+          let teamRows = matchRows.filter(r => r.songNum === '最終結果' || r.songName === '最終結果');
+          
+          // フォールバック：もし「最終結果」と書かれていなければ末尾の2行を取得
+          if (teamRows.length === 0) {
+            teamRows = matchRows.slice(-2);
+          }
           
           let headerRow = `<tr><th class="row-header"></th>` +
             teamRows.map((r, idx) => {
@@ -531,9 +543,19 @@
 
         let targetRows = matchRows.filter(r => String(r.songNum) === String(currentSongTab));
 
-        // ★ダブルス部門の場合、各曲では「チーム名」の行を除外して「個人（1・2曲目は2名、3曲目は4名）」のみを抽出★
-        if (isDoubles && teamNames.length > 0) {
-          targetRows = targetRows.filter(r => !teamNames.includes(r.name));
+        // ★構造ベースの自動判別★
+        // ダブルス部門の場合、1曲目・2曲目は「最初の2名」、3曲目は「最初の4名」の個人データのみを上から順に取得する
+        if (isDoubles) {
+          const expectedCount = (String(currentSongTab) === "3") ? 4 : 2;
+          // 重複なく出現するプレイヤー名を上から順にexpectedCount分だけ取得
+          const players = [];
+          for (let r of targetRows) {
+            if (r.name && !players.includes(r.name)) {
+              players.push(r.name);
+              if (players.length === expectedCount) break;
+            }
+          }
+          targetRows = targetRows.filter(r => players.includes(r.name));
         }
         
         const playerNames = [];
