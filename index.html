@@ -231,6 +231,7 @@
       let lastDept = "";
       let lastRound = "";
       let lastMatch = "";
+      let lastSongNum = ""; // ★ 曲番号の引き継ぎ用変数
 
       for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -239,14 +240,18 @@
         let dept = (idxDept !== -1 && row[idxDept]) ? row[idxDept].toUpperCase().trim() : "";
         let rawRound = idxRound !== -1 ? row[idxRound] : "";
         let match = idxMatch !== -1 ? String(row[idxMatch]).trim() : "";
+        let rawSongNum = idxSongNum !== -1 ? String(row[idxSongNum]).trim() : "";
 
         if (dept) lastDept = dept; else dept = lastDept;
         if (rawRound) lastRound = rawRound; else rawRound = lastRound;
         if (match) lastMatch = match; else match = lastMatch;
+        
+        // ★ 曲番号の引き継ぎ処理（"最終結果" や "合計" も正しく維持する）
+        if (rawSongNum) lastSongNum = rawSongNum; else rawSongNum = lastSongNum;
 
         if (!match) match = "1";
 
-        const songNum = idxSongNum !== -1 ? String(row[idxSongNum]).trim() : "1";
+        const songNum = rawSongNum || "1";
         const songName = idxSongName !== -1 ? row[idxSongName] : "";
         const name = idxName !== -1 ? row[idxName].trim() : "";
 
@@ -344,7 +349,8 @@
 
       if (currentSongTab === null) {
         const matchRows = treeData[currentDept]?.[currentRound]?.[currentMatch] || [];
-        const songNums = Array.from(new Set(matchRows.map(r => r.songNum).filter(s => s && s !== "合計" && s !== "最終結果" && s !== "total"))).sort();
+        // 曲番号から「合計」「最終結果」「total」等の文字を除外してタブ一覧を生成
+        const songNums = Array.from(new Set(matchRows.map(r => r.songNum).filter(s => s && !["合計", "最終結果", "total"].includes(s.toLowerCase())))).sort();
 
         let songCardsHTML = songNums.map(num => `<div class="selection-card" onclick="selectSongTab('${num}')">${num}曲目<div class="sub">${num}曲目のスコア結果</div></div>`).join('');
         songCardsHTML += `<div class="selection-card gold-card" onclick="selectSongTab('final')">最終結果<div class="sub">総合スコア</div></div>`;
@@ -390,7 +396,7 @@
         if (r.songName && r.songNum) songMap[r.songNum] = r.songName;
       });
 
-      const songNums = Array.from(new Set(matchRows.map(r => r.songNum).filter(s => s && s !== "合計" && s !== "最終結果" && s !== "total"))).sort();
+      const songNums = Array.from(new Set(matchRows.map(r => r.songNum).filter(s => s && !["合計", "最終結果", "total"].includes(s.toLowerCase())))).sort();
 
       let tabsHTML = songNums.map(num => `<button class="tab-btn ${currentSongTab === num ? 'active' : ''}" onclick="selectSongTab('${num}')">${num}曲目</button>`).join('') +
         `<button class="tab-btn ${currentSongTab === 'final' ? 'active' : ''}" onclick="selectSongTab('final')">最終結果</button>`;
@@ -416,40 +422,50 @@
 
         if (isDoubles) {
           // ==============================
-          // ダブルス部門の最終結果（判定内訳を表示）
+          // ダブルス部門の最終結果（1〜3曲目を自動集計して表示）
           // ==============================
-          const finalRows = matchRows.filter(r => r.songNum === "合計" || r.songNum === "最終結果" || r.songNum === "total");
-          
+          const displaySongNums = ['1', '2', '3'];
+
           let headerRow = `<tr><th class="row-header"></th>` +
             uniqueNames.map((name, idx) => {
-              let colorClass = (idx === 0) ? 'team-blue' : 'team-orange';
+              // ダブルスなので2人チーム（計4人）を想定し、前半を青、後半をオレンジとする
+              let colorClass = (idx < 2) ? 'team-blue' : 'team-orange';
               return `<th class="player-header ${colorClass}">${name}</th>`;
             }).join('') + `</tr>`;
 
-          let bodyRows = "";
-          let finalStep = 2;
-
-          if (finalRows.length > 0) {
-            const pData = uniqueNames.map(name => {
-              return finalRows.find(r => r.name === name) || {p:0, g:0, gd:0, b:0, m:0, score:0};
+          // プレイヤー（チーム）ごとの判定合計・スコア合計を計算
+          const pData = uniqueNames.map(name => {
+            let p = 0, g = 0, gd = 0, b = 0, m = 0, score = 0;
+            displaySongNums.forEach(sNum => {
+              const r = matchRows.find(row => row.name === name && String(row.songNum) === sNum);
+              if (r) {
+                p += parseInt(r.p, 10) || 0;
+                g += parseInt(r.g, 10) || 0;
+                gd += parseInt(r.gd, 10) || 0;
+                b += parseInt(r.b, 10) || 0;
+                m += parseInt(r.m, 10) || 0;
+                score += parseInt(r.score, 10) || 0;
+              }
             });
-            
-            bodyRows += `<tr><td class="row-header"><span class="p-perfect">PERFECT 合計</span></td>` + pData.map(d => `<td><span ${getAnimClass(1, 0)} data-anim-step="1"><span class="p-perfect">${Number(d.p||0).toLocaleString()}</span></span></td>`).join('') + `</tr>`;
-            bodyRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + pData.map(d => `<td class="p-great"><span ${getAnimClass(1, 1)} data-anim-step="1">${Number(d.g||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
-            bodyRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + pData.map(d => `<td class="p-good"><span ${getAnimClass(1, 2)} data-anim-step="1">${Number(d.gd||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
-            bodyRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + pData.map(d => `<td class="p-bad"><span ${getAnimClass(1, 3)} data-anim-step="1">${Number(d.b||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
-            bodyRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + pData.map(d => `<td class="p-miss"><span ${getAnimClass(1, 4)} data-anim-step="1">${Number(d.m||0).toLocaleString()}</span></td>`).join('') + `</tr>`;
+            return { name, p, g, gd, b, m, score };
+          });
 
-            const maxScore = Math.max(...pData.map(d => d.score));
-            let totalRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">合計得点</td>` + pData.map(d => {
-              let scoreClass = "";
-              if (d.score === maxScore) scoreClass = "score-highest";
-              if (d.score < maxScore && isFinal) scoreClass = "score-silver";
-              return `<td class="score"><span ${getAnimClass(finalStep, 0)} data-anim-step="${finalStep}">${renderScoreCell(d.score, "", scoreClass, false)}</span></td>`;
-            }).join('') + `</tr>`;
+          let bodyRows = "";
+          bodyRows += `<tr><td class="row-header"><span class="p-perfect">PERFECT 合計</span></td>` + pData.map(d => `<td><span ${getAnimClass(1, 0)} data-anim-step="1"><span class="p-perfect">${d.p.toLocaleString()}</span></span></td>`).join('') + `</tr>`;
+          bodyRows += `<tr><td class="row-header p-great">GREAT 合計</td>` + pData.map(d => `<td class="p-great"><span ${getAnimClass(1, 1)} data-anim-step="1">${d.g.toLocaleString()}</span></td>`).join('') + `</tr>`;
+          bodyRows += `<tr><td class="row-header p-good">GOOD 合計</td>` + pData.map(d => `<td class="p-good"><span ${getAnimClass(1, 2)} data-anim-step="1">${d.gd.toLocaleString()}</span></td>`).join('') + `</tr>`;
+          bodyRows += `<tr><td class="row-header p-bad">BAD 合計</td>` + pData.map(d => `<td class="p-bad"><span ${getAnimClass(1, 3)} data-anim-step="1">${d.b.toLocaleString()}</span></td>`).join('') + `</tr>`;
+          bodyRows += `<tr><td class="row-header p-miss">MISS 合計</td>` + pData.map(d => `<td class="p-miss"><span ${getAnimClass(1, 4)} data-anim-step="1">${d.m.toLocaleString()}</span></td>`).join('') + `</tr>`;
 
-            tableHTML = `<thead>${headerRow}</thead><tbody>${bodyRows}${totalRow}</tbody>`;
-          }
+          const maxScore = Math.max(...pData.map(d => d.score));
+          const finalStep = 2;
+          let totalRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">合計得点</td>` + pData.map(d => {
+            let scoreClass = (d.score === maxScore && d.score > 0) ? "score-highest" : "";
+            if (d.score < maxScore && isFinal) scoreClass = "score-silver";
+            return `<td class="score"><span ${getAnimClass(finalStep, 0)} data-anim-step="${finalStep}">${renderScoreCell(d.score, "", scoreClass, false)}</span></td>`;
+          }).join('') + `</tr>`;
+
+          tableHTML = `<thead>${headerRow}</thead><tbody>${bodyRows}${totalRow}</tbody>`;
 
         } else {
           // ==============================
@@ -507,7 +523,7 @@
             participants.forEach(p => {
               const sScore = p.songScores[sNum];
               const sFlg = p.songFlgs[sNum];
-              const isHighest = (sScore === maxSScore); 
+              const isHighest = (sScore === maxSScore && sScore > 0); 
               row += `<td class="sub-score"><span ${getAnimClass(stepNum, 0)} data-anim-step="${stepNum}">${renderScoreCell(sScore, sFlg, isHighest ? "score-highest" : "", true)}</span></td>`;
             });
             return row + `</tr>`;
@@ -568,7 +584,7 @@
         const maxScore = Math.max(...playersData.map(r => r.score));
 
         let scoreRow = `<tr><td class="row-header" style="font-size:1.25rem; color:#006699;">SCORE</td>` + playersData.map((r) => {
-          const isHighest = (r.score === maxScore);
+          const isHighest = (r.score === maxScore && r.score > 0);
           return `<td class="score"><span ${getAnimClass(2, 0)} data-anim-step="2">${renderScoreCell(r.score, r.flg, isHighest ? "score-highest" : "", true)}</span></td>`;
         }).join('') + `</tr>`;
 
